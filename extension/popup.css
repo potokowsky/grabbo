@@ -1,0 +1,90 @@
+:root {
+  --bg: #141414; --card: #1f1f1f; --line: #2c2c2c; --text: #eaeaea; --muted: #8d8d8d;
+  --green: #22c55e; --green-dim: #14532d; --warn: #f59e0b;
+}
+* { box-sizing: border-box; }
+body { margin: 0; width: 400px; max-height: 590px; background: var(--bg); color: var(--text);
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+header strong { flex: 1; font-size: 14px; }
+.logo { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+main { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 380px; }
+footer { padding: 8px 10px 12px; border-top: 1px solid var(--line); text-align: center; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+  display: grid; grid-template-columns: 96px 1fr; gap: 0 10px; }
+.card .body { min-width: 0; }
+.card .opts { grid-column: 1 / -1; }
+.thumb { width: 96px; height: 64px; border-radius: 6px; background: #0b0b0b; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; }
+.thumb img, .thumb video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.thumb.sm { width: 48px; height: 36px; border-radius: 4px; flex-shrink: 0; }
+
+#jobs { padding: 10px 10px 2px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--line); }
+.jhead { display: flex; justify-content: space-between; align-items: center; color: var(--muted);
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.job { display: flex; gap: 8px; align-items: center; background: var(--card); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 8px; }
+.job .body { flex: 1; min-width: 0; }
+.job .top { display: flex; gap: 6px; align-items: center; }
+.job .title { font-size: 12px; }
+.job.clickable { cursor: pointer; }
+.job.clickable:hover { border-color: var(--green); }
+.bar { height: 4px; background: #2e2e2e; border-radius: 2px; margin: 5px 0 3px; overflow: hidden; }
+.fill { height: 100%; background: var(--green); transition: width .4s ease; }
+.job.is-err .fill { background: #ef4444; }
+.jinfo { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.job.is-done .jinfo { color: var(--green); }
+.job.is-err .jinfo { color: #f87171; }
+.card .top { display: flex; align-items: baseline; gap: 6px; }
+.tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--green); background: var(--green-dim); padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
+.title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.meta { color: var(--muted); font-size: 12px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.status { color: var(--muted); font-size: 12px; margin-top: 8px; }
+.status.err { color: #f87171; white-space: normal; overflow-wrap: anywhere; }
+.status.ok { color: var(--green); }
+
+button { font: inherit; cursor: pointer; border: 0; border-radius: 7px; }
+.q { background: #2a2a2a; color: var(--text); padding: 5px 9px; border: 1px solid #3a3a3a; }
+.q:hover { border-color: var(--green); color: #fff; }
+.q small { color: var(--muted); margin-left: 4px; }
+.q.done, .primary.done { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+.primary { background: var(--green); color: #052e13; font-weight: 600; padding: 6px 12px; }
+.ghost { background: transparent; color: var(--muted); padding: 4px 8px; }
+.ghost:hover { color: var(--text); }
+.link { background: none; color: var(--muted); text-decoration: underline; padding: 0; font-size: 12px; }
+
+.empty { color: var(--muted); text-align: center; padding: 18px 8px 8px; }
+.warn { margin: 10px 10px 0; padding: 8px 10px; border-radius: 8px; background: #3b2a06; color: #fcd34d; font-size: 12px; }
+.spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--muted); border-top-color: transparent;
+  border-radius: 50%; animation: s .8s linear infinite; vertical-align: -1px; margin-right: 6px; }
+@keyframes s { to { transform: rotate(360deg); } }
+[hidden] { display: none !important; }
+html, body, main { overflow-x: hidden; }
+.jinfo, .meta, .title { overflow-wrap: anywhere; }
+
+.icon { font-size: 15px; padding: 2px 6px; }
+#all { padding: 10px 10px 0; }
+.wide { width: 100%; padding: 8px 12px; }
+.wide:disabled { opacity: .7; cursor: default; }
+.q.def { border-color: var(--green); }
+.q.def::after { content: '★'; color: var(--green); margin-left: 4px; font-size: 10px; }
+.card .tools, .card .frag { grid-column: 1 / -1; }
+.tools { display: flex; gap: 6px; margin-top: 6px; }
+.tools:empty { display: none; }
+.tool { background: transparent; color: var(--muted); border: 1px dashed #3a3a3a; padding: 3px 8px; font-size: 12px; }
+.tool:hover { color: var(--text); border-color: #555; }
+.tool.on, .tool.done { color: var(--green); border-color: var(--green); border-style: solid; }
+.frag { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.frag input { width: 70px; background: #141414; border: 1px solid #3a3a3a; color: var(--text);
+  border-radius: 6px; padding: 4px 6px; font: inherit; font-size: 12px; }
+.frag input:focus { outline: none; border-color: var(--green); }
+.frag input.bad { border-color: #ef4444; }
+.hint { color: var(--muted); font-size: 11px; }
+/* układ: okienko max ~600 px — lista filmów przewija się, nagłówek i stopka zostają */
+body { display: flex; flex-direction: column; max-height: 590px; overflow: hidden; }
+header, footer, #all, .warn { flex-shrink: 0; }
+#jobs { flex: 0 0 auto; max-height: 210px; overflow-y: auto; padding-bottom: 8px; } /* nigdy się nie zgniata */
+main { flex: 1 1 auto; min-height: 140px; max-height: none; overflow-y: auto; }

@@ -1,0 +1,33 @@
+:root { --bg: #141414; --card: #1f1f1f; --line: #2c2c2c; --text: #eaeaea; --muted: #8d8d8d; --green: #22c55e; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif; }
+main { max-width: 640px; margin: 0 auto; padding: 40px 16px 80px; }
+h1 { display: flex; align-items: center; gap: 10px; font-size: 22px; margin: 0 0 28px; }
+h1 small { color: var(--muted); font-weight: 400; font-size: 15px; }
+.logo { width: 12px; height: 12px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 6px 16px; margin-bottom: 18px; }
+section h2 { margin: 12px 0 4px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0;
+  border-top: 1px solid var(--line); cursor: default; }
+section h2 + .row { border-top: 0; }
+.row > span:first-child { display: flex; flex-direction: column; min-width: 0; }
+.row em { font-style: normal; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.check { cursor: pointer; }
+.btns { display: flex; gap: 6px; flex-shrink: 0; }
+button, select { font: inherit; color: var(--text); background: #2a2a2a; border: 1px solid #3a3a3a;
+  border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:hover, select:hover { border-color: var(--green); }
+button.ghost { background: transparent; color: var(--muted); }
+input[type=checkbox] { appearance: none; width: 38px; height: 22px; border-radius: 11px; background: #3a3a3a;
+  position: relative; cursor: pointer; flex-shrink: 0; transition: background .15s; }
+input[type=checkbox]::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+  border-radius: 50%; background: #fff; transition: transform .15s; }
+input[type=checkbox]:checked { background: var(--green); }
+input[type=checkbox]:checked::after { transform: translateX(16px); }
+.saved { color: var(--green); text-align: center; opacity: 0; transition: opacity .2s; }
+.saved.show { opacity: 1; }
+@media (max-width: 480px) { .row { flex-wrap: wrap; } }
+kbd { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #141414; border: 1px solid #3a3a3a;
+  border-bottom-width: 2px; border-radius: 6px; padding: 5px 8px; align-self: center; white-space: nowrap; }

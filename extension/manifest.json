@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "Potok Video",
+  "version": "2.1.1",
+  "description": "Wykrywa wideo na stronie i pobiera je w wybranej jakości (z pomocnikiem yt-dlp).",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApIA54oGFiufvpvVykkSZE3HiAMPWd8iYyh+NBPsQCaI0lHNjbVdpv3TiAu9BI6C83/rsQr+TK2Z572hmq3mCMs+0/ip6/P7RK4Gx37F+5z7wDK2D8ZCnlnEx721VGm4oZbQddnb/a8K+N81PmcfqAn0kGJ7sPScPL2Mk4Nda62tMynWybeak3zML3nhru00T+Pybar1JYWP/RY5bDRCaqH/GDRwCYvTrcbc1QGOKqyK90Hq7peq87xFabraaTIhYePPYa8/xLkmMKjMmcKw/d+yuMKdBdH1cfqO7SaP7EmpWT6leuTmEWelbFITMr1nd3QTndWmAOEsnjUW9W5EYmQIDAQAB",
+  "permissions": [
+    "webRequest",
+    "storage",
+    "downloads",
+    "nativeMessaging",
+    "tabs",
+    "cookies",
+    "declarativeNetRequestWithHostAccess",
+    "contextMenus",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Potok Video",
+    "default_icon": {
+      "16": "icons/off-16.png",
+      "32": "icons/off-32.png",
+      "48": "icons/off-48.png",
+      "128": "icons/off-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/on-16.png",
+    "48": "icons/on-48.png",
+    "128": "icons/on-128.png"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "download-current": {
+      "suggested_key": {
+        "default": "Alt+Shift+D",
+        "mac": "Alt+Shift+D"
+      },
+      "description": "Pobierz wideo z bieżącej karty (domyślna jakość)"
+    }
+  }
+}
