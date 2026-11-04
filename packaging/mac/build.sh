@@ -22,8 +22,12 @@ mkdir -p "$PAYLOAD/bin" "$WORK/dl" "$ROOT/dist"
 
 fetch() { curl -fsSL --retry 4 --retry-delay 3 -o "$2" "$1"; }
 
-echo "== yt-dlp"
-fetch "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos" "$PAYLOAD/bin/yt-dlp"
+echo "== yt-dlp (wersja w folderze)"
+# Nie jednoplikowa: ta rozpakowuje Pythona do /var/folders przy każdym starcie, a procesy uruchomione
+# przez Brave dziedziczą kwarantannę → macOS blokuje rozpakowany Python.framework („uszkodzony”).
+fetch "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos.zip" "$WORK/dl/yt-dlp.zip"
+ditto -x -k "$WORK/dl/yt-dlp.zip" "$PAYLOAD/bin/yt-dlp-dist"
+cp packaging/mac/yt-dlp "$PAYLOAD/bin/yt-dlp"
 
 echo "== ffmpeg + ffprobe ($FF_ARCH)"
 for t in ffmpeg ffprobe; do
@@ -36,7 +40,7 @@ echo "== deno ($DENO_ARCH)"
 fetch "https://github.com/denoland/deno/releases/latest/download/deno-$DENO_ARCH-apple-darwin.zip" "$WORK/dl/deno.zip"
 unzip -oq "$WORK/dl/deno.zip" -d "$PAYLOAD/bin"
 
-chmod +x "$PAYLOAD/bin/"*
+chmod +x "$PAYLOAD/bin/"* "$PAYLOAD/bin/yt-dlp-dist/yt-dlp_macos"
 xattr -cr "$PAYLOAD/bin" 2>/dev/null || true
 
 echo "== kontrola narzędzi"

@@ -42,12 +42,20 @@ jobs:
       - name: Test install on runner
         run: |
           set -euo pipefail
-          sudo installer -pkg dist/Grabbo-*-mac-${{ matrix.arch }}.pkg -target /
+          PKG="$(ls dist/Grabbo-*-mac-${{ matrix.arch }}.pkg)"
+          # jak po pobraniu przez Brave: paczka z kwarantanną
+          xattr -w com.apple.quarantine "0083;$(printf %x "$(date +%s)");Brave Browser;" "$PKG"
+          sudo installer -pkg "$PKG" -target /
           APP="$HOME/Library/Application Support/Grabbo"
           MAN="$HOME/Library/Application Support/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.grabbo.app.json"
           cat "$MAN"
           ls -la "$APP" "$APP/bin" "$HOME/Documents/Grabbo/wtyczka"
           test ! -e "/Library/Application Support/Grabbo/installer"
+          Q="$(find "$APP" "$HOME/Documents/Grabbo" -exec xattr -s -p com.apple.quarantine {} \; -print 2>/dev/null | grep -c '^/' || true)"
+          echo "files with quarantine: $Q"
+          test "$Q" = 0
+          codesign --verify --deep --strict -v "$APP/host/_internal/Python.framework" || true
+          spctl --assess --type execute -v "$APP/host/grabbo_host" || true
           EXE="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["path"])' "$MAN")"
           python3 - "$EXE" <<'PY'
           import json, struct, subprocess, sys

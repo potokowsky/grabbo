@@ -31,7 +31,6 @@ as_user ditto "$SRC/host" "$APP/host"
 as_user ditto "$SRC/bin" "$APP/bin"
 as_user cp "$SRC/uninstall.sh" "$APP/uninstall.sh"
 as_user cp "$SRC/VERSION" "$APP/VERSION"
-xattr -cr "$APP/host" "$APP/bin" 2>/dev/null || true
 rm -f "$APP/last_update"
 
 # 2. Wtyczka — stałe miejsce, które tester wgrywa w trybie dewelopera
@@ -58,6 +57,10 @@ EOF
 done
 
 as_user mkdir -p "$H/Downloads/Grabbo"
+
+# Brave oznacza pobraną paczkę kwarantanną, a Instalator przenosi ją na pliki. Binarki podpisane ad-hoc
+# z kwarantanną macOS uznaje za „uszkodzone” — zdejmujemy ją z każdego pliku osobno (także z symlinków).
+find "$APP" "$EXT_DEST" -exec xattr -d -s com.apple.quarantine {} \; 2>/dev/null || true
 
 # 4. Kopia z pakietu nie jest już potrzebna
 rm -rf "$SRC"
