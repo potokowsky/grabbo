@@ -2,9 +2,10 @@ import {
   isSupportedSite, cookiesFor, allowReferer, getSettings, fmtForQuality, qualityLabel,
   safeName, stamp, native, isAdLibrary, adInfoFor, adName, adMeta, adDays
 } from './sites.js';
+import { t, initLang, applyI18n } from './i18n.js';
 
 const WIN = /Windows/i.test(navigator.userAgent);
-const SHOW_IN = WIN ? 'w Pobranych' : 'w Finderze';
+const SHOW_IN = () => t(WIN ? 'w Pobranych' : 'w Finderze');
 const $list = document.getElementById('list');
 const $jobs = document.getElementById('jobs');
 const $warn = document.getElementById('host-warning');
@@ -39,7 +40,7 @@ function el(tag, cls, text) {
 
 function showHostWarning(error) {
   $warn.hidden = false;
-  $warn.textContent = 'Pomocnik nie odpowiada — uruchom instalator z paczki jeszcze raz. ' + (error ? `(${error})` : '');
+  $warn.textContent = t('Pomocnik nie odpowiada — uruchom instalator z paczki jeszcze raz.') + (error ? ` (${error})` : '');
 }
 
 function thumb({ img, video, cls = 'thumb', onMeta }) {
@@ -64,7 +65,7 @@ async function startHelper(msg, onError) {
   const res = await native({ action: 'download', settings, ...msg });
   if (res.ok) { rememberJob(res.job, msg); lastHostPoll = 0; refreshJobs(); return true; }
   if (res.nohost) showHostWarning(res.error);
-  onError?.(res.error || 'nieznany błąd');
+  onError?.(res.error || t('nieznany błąd'));
   return false;
 }
 
@@ -92,7 +93,7 @@ async function retryJob(id) {
 function addPick(card, run, days = null) {
   const cb = el('input', 'pick');
   cb.type = 'checkbox';
-  cb.title = 'Zaznacz do pobrania';
+  cb.title = t('Zaznacz do pobrania');
   cb.onchange = updateAll;
   card.querySelector('.top').prepend(cb);
   quickActions.push({ run, card, cb, days });
@@ -108,7 +109,8 @@ function helperCard({ tag, title, meta, url, referer, name, extraMeta }) {
   top.append(el('span', 'tag', tag), el('span', 'title', title));
   const $meta = el('div', 'meta', meta || '');
   const $status = el('div', 'status');
-  $status.innerHTML = '<span class="spin"></span>Sprawdzam dostępne jakości…';
+  $status.innerHTML = '<span class="spin"></span>';
+  $status.append(t('Sprawdzam dostępne jakości…'));
   const $opts = el('div', 'opts');
   const $tools = el('div', 'tools');
   body.append(top, $meta, $status);
@@ -118,23 +120,23 @@ function helperCard({ tag, title, meta, url, referer, name, extraMeta }) {
   let probe = null;
   let shownTitle = title;
   const cookiesReady = cookiesFor([url, referer]).then((c) => { base.cookies = c; });
-  const err = (e) => { $status.className = 'status err'; $status.textContent = 'Błąd: ' + e; };
+  const err = (e) => { $status.className = 'status err'; $status.textContent = t('Błąd: ') + e; };
 
   // ✂ fragment
   let section = null;
-  const fragBtn = el('button', 'tool', '✂ Fragment');
+  const fragBtn = el('button', 'tool', t('✂ Fragment'));
   const fragBox = el('div', 'frag');
   fragBox.hidden = true;
-  const from = el('input'); from.placeholder = 'od 0:00';
-  const to = el('input'); to.placeholder = 'do 5:00';
-  const fragInfo = el('span', 'hint', 'puste „do” = do końca');
+  const from = el('input'); from.placeholder = t('od 0:00');
+  const to = el('input'); to.placeholder = t('do 5:00');
+  const fragInfo = el('span', 'hint', t('puste „do” = do końca'));
   fragBox.append(from, el('span', 'hint', '–'), to, fragInfo);
   const updateSection = () => {
     const a = from.value.trim() || '0:00', b = to.value.trim();
     const okA = TIME_RE.test(a), okB = !b || TIME_RE.test(b);
     from.classList.toggle('bad', !okA); to.classList.toggle('bad', !okB);
     section = (okA && okB && (from.value.trim() || b)) ? `${a}-${b || 'inf'}` : null;
-    fragBtn.textContent = section ? `✂ ${a}–${b || 'koniec'}` : '✂ Fragment';
+    fragBtn.textContent = section ? `✂ ${a}–${b || t('koniec')}` : t('✂ Fragment');
     fragBtn.classList.toggle('on', !!section);
   };
   from.oninput = to.oninput = updateSection;
@@ -157,7 +159,8 @@ function helperCard({ tag, title, meta, url, referer, name, extraMeta }) {
     let r = await native({ action: 'probe', ...base });
     // plan B: konkretny plik nie przeszedł -> niech yt-dlp przeanalizuje całą stronę
     if (!r.ok && !r.nohost && referer && referer !== url && /^https?:/.test(referer)) {
-      $status.innerHTML = '<span class="spin"></span>Próbuję przez całą stronę…';
+      $status.innerHTML = '<span class="spin"></span>';
+      $status.append(t('Próbuję przez całą stronę…'));
       const prev = { url: base.url, cookies: base.cookies };
       base.url = referer;
       base.cookies = await cookiesFor([referer]);
@@ -167,7 +170,7 @@ function helperCard({ tag, title, meta, url, referer, name, extraMeta }) {
     if (r.ok && r.imp) base.imp = true;
     if (!r.ok) {
       $status.className = 'status err';
-      $status.textContent = r.nohost ? 'Brak pomocnika.' : 'Nie udało się odczytać: ' + (r.error || '');
+      $status.textContent = r.nohost ? t('Brak pomocnika.') : t('Nie udało się odczytać: ') + (r.error || '');
       if (r.nohost) showHostWarning(r.error);
       return;
     }
@@ -183,10 +186,10 @@ function helperCard({ tag, title, meta, url, referer, name, extraMeta }) {
     // domyślna jakość — wyróżniona (albo najbliższa niższa)
     const q = settings.defaultQuality;
     const heights = r.options.map((o) => parseInt(o.label)).filter(Boolean);
-    const defLabel = q === 'audio' ? 'Tylko audio'
-      : (heights.find((h) => h <= +q) ?? heights[heights.length - 1]) + 'p';
+    const defLabel = (heights.find((h) => h <= +q) ?? heights[heights.length - 1]) + 'p';
     for (const o of r.options) {
-      const b = el('button', 'q' + (o.label === defLabel ? ' def' : ''));
+      const isDef = q === 'audio' ? !!o.audio : o.label === defLabel;
+      const b = el('button', 'q' + (isDef ? ' def' : ''));
       b.append(document.createTextNode(o.label));
       if (o.size && !section) b.append(el('small', null, '~' + fmtSize(o.size)));
       b.onclick = async () => {
@@ -198,8 +201,8 @@ function helperCard({ tag, title, meta, url, referer, name, extraMeta }) {
     }
     if (r.duration) $tools.append(fragBtn);
     if (r.subs?.length) {
-      const sb = el('button', 'tool', 'Napisy SRT');
-      sb.title = 'Pobierz same napisy (' + r.subs.join(', ') + ')';
+      const sb = el('button', 'tool', t('Napisy SRT'));
+      sb.title = t('Pobierz same napisy ({0})', r.subs.join(', '));
       sb.onclick = async () => {
         sb.disabled = true;
         if (await startHelper({ ...dlMsg({ fmt: 'b', label: 'SRT' }), subsOnly: true }, err)) sb.classList.add('done');
@@ -220,9 +223,9 @@ function fileCard(item, ad) {
   const display = ad ? [ad.author, ad.id && `#${ad.id}`].filter(Boolean).join(' · ') : safeName(tab.title);
   const body = el('div', 'body');
   const top = el('div', 'top');
-  top.append(el('span', 'tag', ext.toUpperCase()), el('span', 'title', display || 'Wideo'));
+  top.append(el('span', 'tag', ext.toUpperCase()), el('span', 'title', display || t('Wideo')));
   const days = ad && settings.adDays ? adDays(ad.start) : 0;
-  const adBit = ad?.start ? `start ${ad.start}${days ? ` · ${days} ${days === 1 ? 'dzień' : 'dni'} aktywna` : ''}` : null;
+  const adBit = ad?.start ? t('start {0}', ad.start) + (days ? ' · ' + t(days === 1 ? '{0} dzień aktywna' : '{0} dni aktywna', days) : '') : null;
   const metaBits = [adBit, fmtSize(item.size), !ad && new URL(item.url).hostname].filter(Boolean);
   const $meta = el('div', 'meta', metaBits.join(' · '));
   allowReferer(item.url, tab.url);
@@ -238,7 +241,7 @@ function fileCard(item, ad) {
   const $status = el('div', 'status');
 
   const $opts = el('div', 'opts');
-  const dl = el('button', 'primary', 'Pobierz');
+  const dl = el('button', 'primary', t('Pobierz'));
   const name = ad && settings.smartNames ? adName(ad) : `${safeName(tab.title)} ${stamp()}`;
   const meta = ad ? adMeta(ad) : null;
   // queued = przez pomocnika (kolejka, po jednym) — „Pobierz wszystkie” i własny folder
@@ -247,8 +250,8 @@ function fileCard(item, ad) {
       cookiesFor([item.url, tab.url]).then((cookies) => startHelper({
         url: item.url, referer: tab.url, ua: navigator.userAgent, cookies, fmt: 'b/bv*+ba',
         label: ext.toUpperCase(), title: name, display, meta
-      }, (e) => { $status.className = 'status err'; $status.textContent = 'Błąd: ' + e; })).then((ok) => {
-        if (ok) { dl.classList.add('done'); dl.textContent = 'Pobieram ✓'; }
+      }, (e) => { $status.className = 'status err'; $status.textContent = t('Błąd: ') + e; })).then((ok) => {
+        if (ok) { dl.classList.add('done'); dl.textContent = t('Pobieram ✓'); }
         resolve(ok);
       });
       return;
@@ -257,11 +260,11 @@ function fileCard(item, ad) {
       url: item.url, filename: `${WIN ? '' : 'Grabbo/'}${name}.${ext}`, conflictAction: 'uniquify'
     }, async (id) => {
       if (chrome.runtime.lastError || id === undefined) {
-        dl.textContent = 'Nie wyszło — użyj „przez pomocnika”';
+        dl.textContent = t('Nie wyszło — użyj „przez pomocnika”');
         return resolve(false);
       }
       dl.classList.add('done');
-      dl.textContent = 'Pobieram ✓';
+      dl.textContent = t('Pobieram ✓');
       const { bdl = [] } = await chrome.storage.local.get('bdl');
       // dane do obróbki po pobraniu (storyboard, CSV) i do planu B przez pomocnika
       bdl.unshift({ id, title: display, label: ext.toUpperCase(), video: item.url, started: Date.now(),
@@ -274,7 +277,7 @@ function fileCard(item, ad) {
   dl.onclick = () => download();
   card.append($thumb, body, $opts, $status);
   addPick(card, () => download(true), ad?.start ? adDays(ad.start) : null);
-  const viaHelper = el('button', 'link', 'przez pomocnika');
+  const viaHelper = el('button', 'link', t('przez pomocnika'));
   viaHelper.onclick = () => card.replaceWith(helperCard({
     tag: ext.toUpperCase(), title: display, url: item.url, referer: tab.url, name, extraMeta: meta
   }));
@@ -288,7 +291,7 @@ function jobRow({ title, label, img, video, pct, status, sub, onOpen, error, onR
   row.append(thumb({ img, video, cls: 'thumb sm' }));
   const body = el('div', 'body');
   const top = el('div', 'top');
-  top.append(el('span', 'title', title || 'Wideo'));
+  top.append(el('span', 'title', title || t('Wideo')));
   if (label) top.append(el('span', 'tag', label));
   const bar = el('div', 'bar');
   const fill = el('div', 'fill');
@@ -296,11 +299,11 @@ function jobRow({ title, label, img, video, pct, status, sub, onOpen, error, onR
   bar.append(fill);
   body.append(top, bar, el('div', 'jinfo', error || sub || ''));
   row.append(body);
-  if (onOpen && status === 'done') { row.classList.add('clickable'); row.title = 'Pokaż ' + SHOW_IN; row.onclick = onOpen; }
+  if (onOpen && status === 'done') { row.classList.add('clickable'); row.title = t('Pokaż {0}', SHOW_IN()); row.onclick = onOpen; }
   if (onRetry && status === 'error') {
-    const b = el('button', 'tool retry', '↻ Ponów');
-    b.title = 'Spróbuj pobrać jeszcze raz';
-    b.onclick = (e) => { e.stopPropagation(); b.disabled = true; b.textContent = 'Ponawiam…'; onRetry(); };
+    const b = el('button', 'tool retry', t('↻ Ponów'));
+    b.title = t('Spróbuj pobrać jeszcze raz');
+    b.onclick = (e) => { e.stopPropagation(); b.disabled = true; b.textContent = t('Ponawiam…'); onRetry(); };
     row.append(b);
   }
   return row;
@@ -329,16 +332,16 @@ async function doRefreshJobs() {
   for (const j of hostJobs) {
     if (retried.includes(j.id)) continue; // zastąpione nowym zadaniem
     let sub;
-    if (j.status === 'done') sub = 'Gotowe ✓ · kliknij, żeby pokazać ' + SHOW_IN;
-    else if (j.status === 'merge') sub = 'Łączę obraz i dźwięk…';
-    else if (j.status === 'post') sub = j.stage || 'Kończę…';
-    else if (j.status === 'start') sub = 'Startuję…';
-    else if (j.status === 'queued') sub = 'W kolejce' + (j.ahead ? ` · przed nim: ${j.ahead}` : '');
-    else sub = [`${Math.round(j.pct)}%`, j.part > 1 ? 'audio' : null,
-      j.speed ? fmtSize(j.speed) + '/s' : null, j.eta ? 'zostało ' + fmtDur(j.eta) : null].filter(Boolean).join(' · ');
+    if (j.status === 'done') sub = t('Gotowe ✓ · kliknij, żeby pokazać {0}', SHOW_IN());
+    else if (j.status === 'merge') sub = t('Łączę obraz i dźwięk…');
+    else if (j.status === 'post') sub = j.stage || t('Kończę…');
+    else if (j.status === 'start') sub = t('Startuję…');
+    else if (j.status === 'queued') sub = t('W kolejce') + (j.ahead ? t(' · przed nim: {0}', j.ahead) : '');
+    else sub = [`${Math.round(j.pct)}%`, j.part > 1 ? t('audio') : null,
+      j.speed ? fmtSize(j.speed) + '/s' : null, j.eta ? t('zostało {0}', fmtDur(j.eta)) : null].filter(Boolean).join(' · ');
     rows.push({ t: j.started * 1000, node: jobRow({
       title: j.title, label: j.label, img: j.thumb, pct: ['merge', 'post'].includes(j.status) ? 100 : j.pct,
-      status: j.status, sub, error: j.status === 'error' ? 'Błąd: ' + j.error : null,
+      status: j.status, sub, error: j.status === 'error' ? t('Błąd: ') + j.error : null,
       onOpen: () => native({ action: 'reveal', path: j.file }),
       onRetry: retry[j.id] ? () => retryJob(j.id) : null
     }), key: j.id + j.status });
@@ -352,9 +355,9 @@ async function doRefreshJobs() {
     rows.push({ t: b.started, node: jobRow({
       title: b.title, label: b.label, video: b.video, pct: done ? 100 : pct,
       status: done ? 'done' : err ? 'error' : 'download',
-      sub: done ? 'Gotowe ✓ · kliknij, żeby pokazać ' + SHOW_IN
-        : `${Math.round(pct)}% · ${fmtSize(d.bytesReceived)} z ${fmtSize(d.totalBytes)}`,
-      error: err ? 'Przerwane — przełączam na pomocnika…' : null,
+      sub: done ? t('Gotowe ✓ · kliknij, żeby pokazać {0}', SHOW_IN())
+        : `${Math.round(pct)}% · ` + t('{0} z {1}', fmtSize(d.bytesReceived), fmtSize(d.totalBytes)),
+      error: err ? t('Przerwane — przełączam na pomocnika…') : null,
       onOpen: () => chrome.downloads.show(b.id)
     }), key: b.id + d.state });
   }
@@ -376,8 +379,8 @@ async function doRefreshJobs() {
     $jobs.dataset.sig = sig;
     if (shown.length) {
       const head = el('div', 'jhead');
-      head.append(el('span', null, 'Pobierane'));
-      const clr = el('button', 'ghost', 'Wyczyść gotowe');
+      head.append(el('span', null, t('Pobierane')));
+      const clr = el('button', 'ghost', t('Wyczyść gotowe'));
       clr.onclick = async () => {
         await native({ action: 'clear_jobs' });
         const { bdl: list = [] } = await chrome.storage.local.get('bdl');
@@ -413,12 +416,12 @@ async function render() {
   const adFor = (u) => { try { return adByPath.get(new URL(u).pathname) || null; } catch (_) { return null; } };
 
   if (isSupportedSite(tab.url)) {
-    $list.append(helperCard({ tag: 'Strona', title: tab.title, url: tab.url, referer: tab.url }));
+    $list.append(helperCard({ tag: t('Strona'), title: tab.title, url: tab.url, referer: tab.url }));
   }
   for (const item of items) {
     if (item.kind === 'file') $list.append(fileCard(item, adFor(item.url)));
     else if (item.kind === 'embed') $list.append(helperCard({
-      tag: item.platform, title: item.platform + ' — osadzony film', url: item.url, referer: tab.url
+      tag: item.platform, title: t('{0} — osadzony film', item.platform), url: item.url, referer: tab.url
     }));
     else $list.append(helperCard({
       tag: item.kind === 'hls' ? 'HLS' : 'DASH', title: safeName(tab.title), meta: new URL(item.url).hostname,
@@ -428,10 +431,10 @@ async function render() {
 
   if (!$list.children.length) {
     const empty = el('div', 'empty');
-    empty.append(el('div', null, 'Nie wykryto wideo. Odpal film na stronie i otwórz to okienko jeszcze raz.'));
-    const tryBtn = el('button', 'q', 'Spróbuj całą stronę przez pomocnika');
+    empty.append(el('div', null, t('Nie wykryto wideo. Odpal film na stronie i otwórz to okienko jeszcze raz.')));
+    const tryBtn = el('button', 'q', t('Spróbuj całą stronę przez pomocnika'));
     tryBtn.style.marginTop = '10px';
-    tryBtn.onclick = () => $list.replaceChildren(helperCard({ tag: 'Strona', title: tab.title, url: tab.url, referer: tab.url }));
+    tryBtn.onclick = () => $list.replaceChildren(helperCard({ tag: t('Strona'), title: tab.title, url: tab.url, referer: tab.url }));
     empty.append(tryBtn);
     $list.append(empty);
   }
@@ -459,23 +462,26 @@ function updateAll() {
   const todo = picked.length ? picked : visible;
   const btn = $all.querySelector('button');
   if (btn.dataset.busy) return;
-  btn.textContent = (picked.length ? `Pobierz zaznaczone (${picked.length})` : `Pobierz wszystkie (${visible.length})`) +
+  btn.textContent = (picked.length ? t('Pobierz zaznaczone ({0})', picked.length) : t('Pobierz wszystkie ({0})', visible.length)) +
     ` · ${qualityLabel(settings.defaultQuality)}`;
   btn.disabled = !todo.length;
   btn.onclick = async () => {
     btn.disabled = true;
     btn.dataset.busy = '1';
-    btn.textContent = 'Startuję pobieranie…';
+    btn.textContent = t('Startuję pobieranie…');
     for (const q of todo) {
       await q.run();
       q.cb.checked = false;
       await new Promise((r) => setTimeout(r, 250));
     }
-    btn.textContent = `W kolejce ✓ (${todo.length})`;
+    btn.textContent = t('W kolejce ✓ ({0})', todo.length);
     setTimeout(() => { delete btn.dataset.busy; updateAll(); }, 2000);
   };
 }
 
+for (const n of [0, 7, 14, 30, 60, 90]) {
+  $all.querySelector('select').append(new Option(n ? t('{0}+ dni', n) : t('wszystkie'), n));
+}
 $all.querySelector('select').onchange = (e) => {
   minDays = +e.target.value;
   chrome.storage.local.set({ minDays });
@@ -494,9 +500,12 @@ document.getElementById('open').onclick = async () => {
 
 (async () => {
   settings = await getSettings();
+  await initLang();
+  applyI18n();
+  for (const o of $all.querySelectorAll('option')) o.textContent = +o.value ? t('{0}+ dni', o.value) : t('wszystkie');
   ({ minDays = 0 } = await chrome.storage.local.get('minDays'));
-  if (settings.outDir) document.getElementById('open').textContent = 'Otwórz folder docelowy';
-  else if (WIN) document.getElementById('open').textContent = 'Otwórz folder Pobrane';
+  if (settings.outDir) document.getElementById('open').textContent = t('Otwórz folder docelowy');
+  else if (WIN) document.getElementById('open').textContent = t('Otwórz folder Pobrane');
   await render();
   refreshJobs();
   setInterval(refreshJobs, 700);

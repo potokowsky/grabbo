@@ -7,72 +7,79 @@
 </head>
 <body>
   <main>
-    <h1><span class="logo"></span>Grabbo <small>ustawienia</small></h1>
+    <h1><span class="logo"></span>Grabbo <small data-i18n>ustawienia</small></h1>
 
     <section>
-      <h2>Pobieranie</h2>
+      <h2 data-i18n>Pobieranie</h2>
       <label class="row">
         <span>
-          <strong>Domyślna jakość</strong>
-          <em>Wyróżniona gwiazdką w okienku; używana przez „Pobierz wszystkie”, prawy klik i skrót klawiszowy.</em>
+          <strong>Language / Język</strong>
+          <em>English or Polish interface.</em>
+        </span>
+        <select id="lang"></select>
+      </label>
+      <label class="row">
+        <span>
+          <strong data-i18n>Domyślna jakość</strong>
+          <em data-i18n>Wyróżniona gwiazdką w okienku; używana przez „Pobierz wszystkie”, prawy klik i skrót klawiszowy.</em>
         </span>
         <select id="defaultQuality"></select>
       </label>
       <div class="row">
         <span>
-          <strong>Folder docelowy</strong>
+          <strong data-i18n>Folder docelowy</strong>
           <em id="outDirLabel">Domyślny</em>
         </span>
         <span class="btns">
-          <button id="pick">Wybierz…</button>
-          <button id="reset" class="ghost">Domyślny</button>
+          <button id="pick" data-i18n>Wybierz…</button>
+          <button id="reset" class="ghost" data-i18n>Domyślny</button>
         </span>
       </div>
       <div class="row">
         <span>
-          <strong>Skrót klawiszowy</strong>
-          <em>Pobiera film z bieżącej karty w domyślnej jakości, bez otwierania okienka.</em>
+          <strong data-i18n>Skrót klawiszowy</strong>
+          <em data-i18n>Pobiera film z bieżącej karty w domyślnej jakości, bez otwierania okienka.</em>
         </span>
         <span class="btns">
           <kbd id="shortcut">—</kbd>
-          <button id="changeShortcut">Zmień</button>
+          <button id="changeShortcut" data-i18n>Zmień</button>
         </span>
       </div>
     </section>
 
     <section>
-      <h2>Po pobraniu</h2>
+      <h2 data-i18n>Po pobraniu</h2>
       <label class="row check">
-        <span><strong>Napisy SRT razem z filmem</strong><em>Gdy serwis je ma (np. YouTube), zapisują się obok pliku.</em></span>
+        <span><strong data-i18n>Napisy SRT razem z filmem</strong><em data-i18n>Gdy serwis je ma (np. YouTube), zapisują się obok pliku.</em></span>
         <input type="checkbox" id="subs">
       </label>
       <label class="row check">
-        <span><strong>Czyść metadane</strong><em>Usuwa z pliku tytuły, komentarze, daty i informację „pobrano z”.</em></span>
+        <span><strong data-i18n>Czyść metadane</strong><em data-i18n>Usuwa z pliku tytuły, komentarze, daty i informację „pobrano z”.</em></span>
         <input type="checkbox" id="stripMeta">
       </label>
     </section>
 
     <section>
-      <h2>Do pracy — analiza reklam</h2>
+      <h2 data-i18n>Do pracy — analiza reklam</h2>
       <label class="row check">
-        <span><strong>Storyboard</strong><em>Obrazek z klatkami co kilka sekund (max 36) i czasem na każdej — cała reklama na jednym ekranie.</em></span>
+        <span><strong data-i18n>Storyboard</strong><em data-i18n>Obrazek z klatkami co kilka sekund (max 36) i czasem na każdej — cała reklama na jednym ekranie.</em></span>
         <input type="checkbox" id="storyboard">
       </label>
       <label class="row check">
-        <span><strong>Swipe file (CSV)</strong><em>Każde pobranie dopisuje wiersz do swipe-file.csv w folderze docelowym: link, tytuł, autor, wyświetlenia, daty, długość.</em></span>
+        <span><strong data-i18n>Swipe file (CSV)</strong><em data-i18n>Każde pobranie dopisuje wiersz do swipe-file.csv w folderze docelowym: link, tytuł, autor, wyświetlenia, daty, długość.</em></span>
         <input type="checkbox" id="swipe">
       </label>
       <label class="row check">
-        <span><strong>Dni aktywności reklamy</strong><em>Ile dni reklama już leci (Biblioteka reklam Meta) — w okienku i w kolumnie CSV. Długo aktywne = zwykle działają.</em></span>
+        <span><strong data-i18n>Dni aktywności reklamy</strong><em data-i18n>Ile dni reklama już leci (Biblioteka reklam Meta) — w okienku i w kolumnie CSV. Długo aktywne = zwykle działają.</em></span>
         <input type="checkbox" id="adDays">
       </label>
       <label class="row check">
-        <span><strong>Mądre nazwy plików</strong><em>Reklamodawca_ID-reklamy_data-startu.mp4 zamiast nazwy strony (Biblioteka reklam Meta).</em></span>
+        <span><strong data-i18n>Mądre nazwy plików</strong><em data-i18n>Reklamodawca_ID-reklamy_data-startu.mp4 zamiast nazwy strony (Biblioteka reklam Meta).</em></span>
         <input type="checkbox" id="smartNames">
       </label>
     </section>
 
-    <p id="saved" class="saved">Zapisano ✓</p>
+    <p id="saved" class="saved" data-i18n>Zapisano ✓</p>
   </main>
   <script type="module" src="options.js"></script>
 </body>

@@ -9,7 +9,7 @@ Klikasz ją, wybierasz jakość i plik ląduje w:
   Windows: Pobrane
 
 
-CO POTRAFI (wersja 0.2.3)
+CO POTRAFI (wersja 0.3.0)
 -----------------------
 - Wybór jakości (★ = domyślna z ustawień), pasek postępu, miniaturki.
 - "Pobierz wszystkie" — gdy na stronie jest kilka filmów; pobierają się po kolei.

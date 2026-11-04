@@ -1,3 +1,5 @@
+import { t, getLang } from './i18n.js';
+
 // Strony, które obsługuje pomocnik (yt-dlp) — tu ikonka świeci od razu, bez czekania na wykrycie pliku.
 export const SITE_PATTERNS = [
   /youtube\.com\/(watch|shorts\/|live\/)/,
@@ -52,7 +54,7 @@ export const isSupportedSite = (url) => !!url && SITE_PATTERNS.some((re) => re.t
 // ---------- ustawienia ----------
 export const DEFAULTS = {
   defaultQuality: '720', outDir: '', subs: true, storyboard: true, swipe: true,
-  stripMeta: false, smartNames: true, adDays: true
+  stripMeta: false, smartNames: true, adDays: true, lang: 'en'
 };
 export const QUALITIES = [
   ['2160', '2160p (4K)'], ['1440', '1440p'], ['1080', '1080p'], ['720', '720p'],
@@ -65,16 +67,16 @@ export async function getSettings() {
 export const fmtForQuality = (q) => q === 'audio'
   ? 'ba[ext=m4a]/ba/b'
   : `bv*[height<=${q}]+ba/b[height<=${q}]/bv*+ba/b`;
-export const qualityLabel = (q) => q === 'audio' ? 'Tylko audio' : `${q}p`;
+export const qualityLabel = (q) => q === 'audio' ? t('Tylko audio') : `${q}p`;
 
 export const safeName = (s) => (s || 'wideo').replace(/^\(\d+\+?\)\s*/, '')
   .replace(/[\\/:*?"<>|\n\r]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
 export const stamp = () => new Date().toTimeString().slice(0, 8).replace(/:/g, '.');
 
 export const native = (msg) => new Promise((resolve) => {
-  chrome.runtime.sendNativeMessage('com.grabbo.app', msg, (r) => {
+  chrome.runtime.sendNativeMessage('com.grabbo.app', { lang: getLang(), ...msg }, (r) => {
     if (chrome.runtime.lastError) resolve({ ok: false, nohost: true, error: chrome.runtime.lastError.message });
-    else resolve(r || { ok: false, error: 'Brak odpowiedzi od pomocnika' });
+    else resolve(r || { ok: false, error: getLang() === 'pl' ? 'Brak odpowiedzi od pomocnika' : 'No response from the helper' });
   });
 });
 

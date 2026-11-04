@@ -8,21 +8,18 @@
   <header>
     <span class="logo"></span>
     <strong>Grabbo</strong>
-    <button id="clear" class="ghost" title="Wyczyść listę">Wyczyść</button>
+    <button id="clear" class="ghost" title="Wyczyść listę" data-i18n>Wyczyść</button>
     <button id="settings" class="ghost icon" title="Ustawienia">⚙</button>
   </header>
   <div id="host-warning" class="warn" hidden></div>
   <section id="jobs" hidden></section>
   <div id="all" hidden>
     <button class="primary wide"></button>
-    <select title="Tylko reklamy aktywne co najmniej tyle dni">
-      <option value="0">wszystkie</option><option value="7">7+ dni</option><option value="14">14+ dni</option>
-      <option value="30">30+ dni</option><option value="60">60+ dni</option><option value="90">90+ dni</option>
-    </select>
+    <select title="Tylko reklamy aktywne co najmniej tyle dni"></select>
   </div>
   <main id="list"></main>
   <footer>
-    <button id="open" class="ghost">Otwórz folder „Grabbo”</button>
+    <button id="open" class="ghost" data-i18n>Otwórz folder „Grabbo”</button>
   </footer>
   <script type="module" src="popup.js"></script>
 </body>

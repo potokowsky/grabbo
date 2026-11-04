@@ -64,11 +64,59 @@ def send(obj):
     sys.stdout.buffer.flush()
 
 
+# ---------- język (wtyczka wysyła "lang"; domyślnie angielski) ----------
+LANG = "en"
+EN = {
+    "Nie znaleziono yt-dlp. Uruchom ponownie instalator.": "yt-dlp not found. Run the installer again.",
+    "Ten film jest zabezpieczony DRM (np. Netflix, część płatnych platform) — nie da się go pobrać.":
+        "This video is DRM-protected (e.g. Netflix, some paid platforms) — it can't be downloaded.",
+    "Wymaga zalogowania — zaloguj się na tej stronie w przeglądarce, odśwież ją i spróbuj ponownie.":
+        "Login required — sign in on this site in the browser, refresh the page and try again.",
+    "Ta strona nie jest obsługiwana bezpośrednio — odpal film, żeby wtyczka złapała plik.":
+        "This site isn't supported directly — play the video so the extension can catch the file.",
+    "Serwer odmówił dostępu (403). Odśwież stronę, odpal film jeszcze raz i spróbuj ponownie.":
+        "The server refused access (403). Refresh the page, play the video again and retry.",
+    "Link do filmu wygasł. Odśwież stronę i spróbuj ponownie.": "The video link has expired. Refresh the page and try again.",
+    "Nie udało się wyciąć fragmentu z tego źródła — pobierz cały film.":
+        "Couldn't cut a clip from this source — download the whole video.",
+    "Nie udało się odczytać tej strony": "Couldn't read this page",
+    "Najlepsza": "Best",
+    "Tylko audio": "Audio only",
+    "Czyszczę metadane…": "Stripping metadata…",
+    "Pobieram napisy…": "Downloading subtitles…",
+    "Tworzę storyboard…": "Creating storyboard…",
+    "Napisy pobrane ✓": "Subtitles downloaded ✓",
+    "Nie udało się pobrać napisów": "Couldn't download subtitles",
+    "Pobrano ✓": "Downloaded ✓",
+    "Gotowe": "Done",
+    "nieznany błąd": "unknown error",
+    "Błąd pobierania": "Download error",
+    "Wybierz folder dla Grabbo": "Choose a folder for Grabbo",
+    "Brak pliku": "File not found",
+    "Nieznana akcja: {}": "Unknown action: {}",
+    "Przekroczony czas odczytu strony": "Timed out reading the page",
+    "stary": "old",
+    "Data pobrania": "Downloaded", "Platforma": "Platform", "Autor": "Author", "Tytuł": "Title",
+    "Wyświetlenia": "Views", "Polubienia": "Likes", "Data publikacji": "Published", "Długość": "Length",
+    "Jakość": "Quality", "ID reklamy": "Ad ID", "Start reklamy": "Ad start", "Dni aktywności": "Active days",
+    "Plik": "File",
+}
+
+
+def T(s):
+    return EN.get(s, s) if LANG == "en" else s
+
+
+def set_lang(m):
+    global LANG
+    LANG = "pl" if (m.get("lang") or (m.get("settings") or {}).get("lang")) == "pl" else "en"
+
+
 # ---------- yt-dlp ----------
 def ytdlp():
     path = shutil.which("yt-dlp")
     if not path:
-        raise RuntimeError("Nie znaleziono yt-dlp. Uruchom ponownie instalator.")
+        raise RuntimeError(T("Nie znaleziono yt-dlp. Uruchom ponownie instalator."))
     return path
 
 
@@ -112,19 +160,19 @@ def nice_error(stderr, fallback):
     last = lines[-1]
     joined = " ".join(lines).lower()
     if "drm" in joined:
-        return "Ten film jest zabezpieczony DRM (np. Netflix, część płatnych platform) — nie da się go pobrać."
+        return T("Ten film jest zabezpieczony DRM (np. Netflix, część płatnych platform) — nie da się go pobrać.")
     if any(k in joined for k in ("sign in", "log in", "login required", "logged-in", "private video",
                                  "authentication", "--cookies")):
-        return "Wymaga zalogowania — zaloguj się na tej stronie w przeglądarce, odśwież ją i spróbuj ponownie."
+        return T("Wymaga zalogowania — zaloguj się na tej stronie w przeglądarce, odśwież ją i spróbuj ponownie.")
     if "unsupported url" in joined:
-        return "Ta strona nie jest obsługiwana bezpośrednio — odpal film, żeby wtyczka złapała plik."
+        return T("Ta strona nie jest obsługiwana bezpośrednio — odpal film, żeby wtyczka złapała plik.")
     if "403" in last:
-        return "Serwer odmówił dostępu (403). Odśwież stronę, odpal film jeszcze raz i spróbuj ponownie."
+        return T("Serwer odmówił dostępu (403). Odśwież stronę, odpal film jeszcze raz i spróbuj ponownie.")
     if "404" in last or "410" in last:
-        return "Link do filmu wygasł. Odśwież stronę i spróbuj ponownie."
+        return T("Link do filmu wygasł. Odśwież stronę i spróbuj ponownie.")
     import re
-    if "wyciąć fragmentu" in last:
-        return last.replace("ERROR: ", "")
+    if "GRABBO_CLIP_FAILED" in last:
+        return T("Nie udało się wyciąć fragmentu z tego źródła — pobierz cały film.")
     last = re.sub(r"https?://\S+", "[link]", last)
     last = re.sub(r"^ERROR:\s*(\[[^\]]+\]\s*)?[^:]{0,80}?:\s*", "", last)
     return last[:200]
@@ -169,7 +217,7 @@ def probe(m):
     finally:
         drop(m.pop("_cookiefile", None))
     if r.returncode != 0:
-        raise RuntimeError(nice_error(r.stderr, "Nie udało się odczytać tej strony"))
+        raise RuntimeError(nice_error(r.stderr, T("Nie udało się odczytać tej strony")))
     info = json.loads(r.stdout)
     if info.get("_type") == "playlist" and info.get("entries"):
         info = next((e for e in info["entries"] if e), info)
@@ -193,9 +241,9 @@ def probe(m):
         })
 
     if not options:  # brak informacji o rozdzielczości — jedna opcja „najlepsza”
-        options.append({"label": "Najlepsza", "fmt": "bv*+ba/b", "size": fsize(info)})
+        options.append({"label": T("Najlepsza"), "fmt": "bv*+ba/b", "size": fsize(info)})
     if audios:
-        options.append({"label": "Tylko audio", "fmt": "ba[ext=m4a]/ba", "audio": True,
+        options.append({"label": T("Tylko audio"), "fmt": "ba[ext=m4a]/ba", "audio": True,
                         "size": fsize(best_audio) if best_audio else 0})
 
     return {
@@ -337,6 +385,10 @@ def strip_metadata(path):
         run_quiet(["xattr", "-c", path])  # m.in. „pobrano z” (adres źródłowy) w Finderze
 
 
+def swipe_cols():
+    return [T(c) for c in SWIPE_COLS]
+
+
 SWIPE_COLS = ["Data pobrania", "Platforma", "Autor", "Tytuł", "Link", "Wyświetlenia", "Polubienia",
               "Data publikacji", "Długość", "Jakość", "ID reklamy", "Start reklamy", "Dni aktywności", "Plik"]
 
@@ -359,8 +411,8 @@ def csv_target(folder):
         try:
             with open(path, encoding="utf-8-sig") as fh:
                 header = next(csv.reader(fh), [])
-            if header != SWIPE_COLS:
-                os.replace(path, os.path.join(folder, f"swipe-file (stary {time.strftime('%Y%m%d')}).csv"))
+            if header != swipe_cols():
+                os.replace(path, os.path.join(folder, f"swipe-file ({T('stary')} {time.strftime('%Y%m%d')}).csv"))
         except OSError:
             pass
     return path
@@ -389,7 +441,7 @@ def swipe_row(path, meta, info, m):
             with open(target, "a", newline="", encoding="utf-8-sig" if new else "utf-8") as fh:
                 w = csv.writer(fh)
                 if new:
-                    w.writerow(SWIPE_COLS)
+                    w.writerow(swipe_cols())
                 w.writerow(row)
             return
         except PermissionError:  # np. plik otwarty w Excelu
@@ -418,13 +470,13 @@ def postprocess(path, m, meta, job=None):
 
     info = probe_media(path)
     if st.get("stripMeta"):
-        stage("Czyszczę metadane…")
+        stage(T("Czyszczę metadane…"))
         strip_metadata(path)
     if st.get("subs", True) and m.get("subs") and not m.get("subsOnly"):
-        stage("Pobieram napisy…")
+        stage(T("Pobieram napisy…"))
         fetch_subs(m, os.path.splitext(path)[0].replace("%", "%%") + ".%(ext)s")
     if st.get("storyboard", True) and not audio:
-        stage("Tworzę storyboard…")
+        stage(T("Tworzę storyboard…"))
         make_storyboard(path, info)
     if st.get("swipe", True):
         swipe_row(path, meta, info, m)
@@ -524,9 +576,9 @@ def run_job(m, job, tmpl, sec, meta_in):
         job["updated"] = time.time()
         if files:
             job.update(status="done", pct=100, file=files[0])
-            notify("Napisy pobrane ✓", os.path.basename(files[0]))
+            notify(T("Napisy pobrane ✓"), os.path.basename(files[0]))
         else:
-            job.update(status="error", error="Nie udało się pobrać napisów")
+            job.update(status="error", error=T("Nie udało się pobrać napisów"))
         write_job(job)
         return
 
@@ -577,7 +629,7 @@ def run_job(m, job, tmpl, sec, meta_in):
 
     if p.returncode == 0 and sec and job["file"] and not probe_media(job["file"]).get("duration"):
         p.returncode = 1  # fragment się nie wyciął (serwer nie pozwala przewijać)
-        err += "\nERROR: Nie udało się wyciąć fragmentu z tego źródła — pobierz cały film."
+        err += "\nERROR: GRABBO_CLIP_FAILED"
         drop(job["file"])
     if p.returncode == 0 and job["file"] and os.path.exists(job["file"]):
         meta.update({k: v for k, v in meta_in.items() if v})
@@ -595,11 +647,11 @@ def run_job(m, job, tmpl, sec, meta_in):
     if p.returncode == 0:
         job.update(status="done", pct=100)
         write_job(job)
-        notify("Pobrano ✓", os.path.basename(job["file"] or "") or "Gotowe")
+        notify(T("Pobrano ✓"), os.path.basename(job["file"] or "") or T("Gotowe"))
     else:
-        job.update(status="error", error=nice_error(err, "nieznany błąd"))
+        job.update(status="error", error=nice_error(err, T("nieznany błąd")))
         write_job(job)
-        notify("Błąd pobierania", job["error"])
+        notify(T("Błąd pobierania"), job["error"])
 
 
 def list_jobs():
@@ -658,14 +710,14 @@ def pick_folder():
         ps = ("Add-Type -AssemblyName System.Windows.Forms;"
               "[Console]::OutputEncoding=[Text.Encoding]::UTF8;"
               "$f=New-Object System.Windows.Forms.FolderBrowserDialog;"
-              "$f.Description='Wybierz folder dla Grabbo';"
+              "$f.Description='" + T("Wybierz folder dla Grabbo") + "';"
               "$o=New-Object System.Windows.Forms.Form -Property @{TopMost=$true};"
               "if($f.ShowDialog($o) -eq 'OK'){$f.SelectedPath}")
         r = run_quiet(["powershell", "-NoProfile", "-STA", "-Command", ps])
     else:
         r = run_quiet(["osascript", "-e",
                        'tell application (path to frontmost application as text) to '
-                       'POSIX path of (choose folder with prompt "Wybierz folder dla Grabbo")'])
+                       f'POSIX path of (choose folder with prompt "{T("Wybierz folder dla Grabbo")}")'])
     path = (r.stdout or "").strip()
     if not path:
         return {"ok": False, "cancel": True}
@@ -703,6 +755,7 @@ def maybe_update():
 
 
 def handle(m):
+    set_lang(m)
     action = m.get("action")
     if action == "probe":
         try:
@@ -717,7 +770,7 @@ def handle(m):
     if action in ("download", "post"):
         if action == "post":
             if not m.get("path") or not os.path.exists(m["path"]):
-                return {"ok": False, "error": "Brak pliku"}
+                return {"ok": False, "error": T("Brak pliku")}
             m["post"] = m["path"]
         return start_download(m)
     if action == "pick_folder":
@@ -744,7 +797,7 @@ def handle(m):
         return {"ok": True}
     if action == "defaults":
         return {"ok": True, "outDir": OUT_DIR}
-    return {"ok": False, "error": f"Nieznana akcja: {action}"}
+    return {"ok": False, "error": T("Nieznana akcja: {}").format(action)}
 
 
 def main():
@@ -752,6 +805,7 @@ def main():
         with open(sys.argv[2], encoding="utf-8") as fh:
             spec = json.load(fh)
         drop(sys.argv[2])
+        set_lang(spec)
         worker(spec)
         return
     msg = read_msg()
@@ -760,7 +814,7 @@ def main():
     try:
         send(handle(msg))
     except subprocess.TimeoutExpired:
-        send({"ok": False, "error": "Przekroczony czas odczytu strony"})
+        send({"ok": False, "error": T("Przekroczony czas odczytu strony")})
     except Exception as e:  # noqa: BLE001
         send({"ok": False, "error": str(e)})
 
