@@ -1,16 +1,26 @@
 #!/bin/bash
-# Potok Video — instalacja pomocnika na macOS (Brave + Chrome)
+# Grabbo — instalacja pomocnika na macOS (Brave + Chrome)
 set -e
 
 EXT_ID="mblaggcfnacfohhkkkgonhilbmfolbba"
-HOST_NAME="com.potok.video"
+HOST_NAME="com.grabbo.app"
 DIR="$(cd "$(dirname "$0")" && pwd)"
-APP="$HOME/Library/Application Support/PotokVideo"
-EXT_DEST="$HOME/Documents/Potok Video/wtyczka"
+APP="$HOME/Library/Application Support/Grabbo"
+EXT_DEST="$HOME/Documents/Grabbo/wtyczka"
 
 echo ""
-echo "== Potok Video: instalacja =="
+echo "== Grabbo: instalacja =="
 echo ""
+
+# 0. Sprzątanie po starej nazwie „Potok Video” (pobrane filmy zostają)
+if [ -d "$HOME/Library/Application Support/PotokVideo" ] || [ -d "$HOME/Documents/Potok Video" ]; then
+  rm -rf "$HOME/Library/Application Support/PotokVideo" "$HOME/Documents/Potok Video/wtyczka"
+  rmdir "$HOME/Documents/Potok Video" 2>/dev/null || true
+  echo "✓ usunięto starą instalację „Potok Video”"
+fi
+for B in "BraveSoftware/Brave-Browser" "Google/Chrome"; do
+  rm -f "$HOME/Library/Application Support/$B/NativeMessagingHosts/com.potok.video.json"
+done
 
 # 1. Homebrew (instalujemy, jeśli go nie ma)
 load_brew() {
@@ -50,21 +60,21 @@ echo "✓ Python ($PY)"
 
 # 4. Pomocnik
 mkdir -p "$APP/logs"
-sed "1s|.*|#!$PY|" "$DIR/host/potok_host.py" > "$APP/potok_host.py"
-chmod +x "$APP/potok_host.py"
+sed "1s|.*|#!$PY|" "$DIR/host/grabbo_host.py" > "$APP/grabbo_host.py"
+chmod +x "$APP/grabbo_host.py"
 
 # 5. Wtyczka — kopia w stałym miejscu, żeby można było usunąć pobrany folder
 mkdir -p "$EXT_DEST"
 rm -rf "$EXT_DEST"
 cp -R "$DIR/extension" "$EXT_DEST"
-echo "✓ wtyczka skopiowana do: Dokumenty/Potok Video/wtyczka"
+echo "✓ wtyczka skopiowana do: Dokumenty/Grabbo/wtyczka"
 
 # 6. Rejestracja pomocnika w przeglądarkach
 MANIFEST=$(cat <<EOF
 {
   "name": "$HOST_NAME",
-  "description": "Potok Video helper",
-  "path": "$APP/potok_host.py",
+  "description": "Grabbo helper",
+  "path": "$APP/grabbo_host.py",
   "type": "stdio",
   "allowed_origins": ["chrome-extension://$EXT_ID/"]
 }
@@ -82,7 +92,7 @@ for B in "BraveSoftware/Brave-Browser" "Google/Chrome"; do
 done
 [ $registered = 1 ] || echo "⚠️  Nie znalazłem Brave ani Chrome — uruchom przeglądarkę raz i powtórz instalację."
 
-mkdir -p "$HOME/Downloads/Potok Video"
+mkdir -p "$HOME/Downloads/Grabbo"
 
 echo ""
 echo "✅ Pomocnik zainstalowany."
@@ -94,4 +104,4 @@ echo "  3. Przeciągnij folder 'wtyczka' z okna Findera, które się otworzy, na
 echo "     (albo: 'Załaduj rozpakowane' → wskaż ten folder)"
 echo "  4. Przypnij ikonkę (puzzel → pinezka) i zrestartuj przeglądarkę (⌘Q)"
 echo ""
-open "$HOME/Documents/Potok Video" 2>/dev/null || true
+open "$HOME/Documents/Grabbo" 2>/dev/null || true

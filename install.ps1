@@ -1,10 +1,10 @@
-﻿# Potok Video — instalacja pomocnika na Windows (Brave + Chrome)
+﻿# Grabbo — instalacja pomocnika na Windows (Brave + Chrome)
 $ErrorActionPreference = 'Stop'
 $ExtId    = 'mblaggcfnacfohhkkkgonhilbmfolbba'
-$HostName = 'com.potok.video'
+$HostName = 'com.grabbo.app'
 $Dir      = $PSScriptRoot
-$App      = Join-Path $env:LOCALAPPDATA 'PotokVideo'
-$DocsDir  = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Potok Video'
+$App      = Join-Path $env:LOCALAPPDATA 'Grabbo'
+$DocsDir  = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Grabbo'
 $ExtDest  = Join-Path $DocsDir 'wtyczka'
 
 function Refresh-Path {
@@ -24,12 +24,26 @@ function Find-Python {
 }
 
 Write-Host ''
-Write-Host '== Potok Video: instalacja ==' -ForegroundColor Green
+Write-Host '== Grabbo: instalacja ==' -ForegroundColor Green
 Write-Host ''
 
 if (-not (Has 'winget')) {
     Write-Host '[X] Brak programu winget. Zainstaluj "Instalator aplikacji" (App Installer) ze Sklepu Microsoft i uruchom ponownie.' -ForegroundColor Red
     exit 1
+}
+
+# 0. Sprzątanie po starej nazwie "Potok Video" (pobrane filmy zostają)
+$OldApp  = Join-Path $env:LOCALAPPDATA 'PotokVideo'
+$OldDocs = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Potok Video'
+if ((Test-Path $OldApp) -or (Test-Path $OldDocs)) {
+    Remove-Item $OldApp -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path $OldDocs 'wtyczka') -Recurse -Force -ErrorAction SilentlyContinue
+    if ((Test-Path $OldDocs) -and -not (Get-ChildItem $OldDocs -Force)) { Remove-Item $OldDocs -Force }
+    Write-Host '[OK] usunięto starą instalację "Potok Video"'
+}
+foreach ($k in @('HKCU:\Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.potok.video',
+                 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.potok.video')) {
+    Remove-Item $k -Force -ErrorAction SilentlyContinue
 }
 
 # 1. Narzędzia: yt-dlp (pobieranie), ffmpeg (łączenie obrazu i dźwięku), deno (wymagany przez yt-dlp do YouTube)
@@ -65,15 +79,15 @@ Write-Host "[OK] Python ($py)"
 
 # 3. Pomocnik
 New-Item -ItemType Directory -Force -Path (Join-Path $App 'logs') | Out-Null
-Copy-Item (Join-Path $Dir 'host\potok_host.py') (Join-Path $App 'potok_host.py') -Force
-$bat = "@echo off`r`nchcp 65001 >nul`r`n`"$py`" -u `"%~dp0potok_host.py`" %*`r`n"
-[IO.File]::WriteAllText((Join-Path $App 'potok_host.bat'), $bat, (New-Object Text.UTF8Encoding $false))
+Copy-Item (Join-Path $Dir 'host\grabbo_host.py') (Join-Path $App 'grabbo_host.py') -Force
+$bat = "@echo off`r`nchcp 65001 >nul`r`n`"$py`" -u `"%~dp0grabbo_host.py`" %*`r`n"
+[IO.File]::WriteAllText((Join-Path $App 'grabbo_host.bat'), $bat, (New-Object Text.UTF8Encoding $false))
 
 $manifestPath = Join-Path $App "$HostName.json"
 $manifest = [ordered]@{
     name            = $HostName
-    description     = 'Potok Video helper'
-    path            = (Join-Path $App 'potok_host.bat')
+    description     = 'Grabbo helper'
+    path            = (Join-Path $App 'grabbo_host.bat')
     type            = 'stdio'
     allowed_origins = @("chrome-extension://$ExtId/")
 } | ConvertTo-Json
@@ -92,7 +106,7 @@ Write-Host '[OK] zarejestrowano w Brave i Chrome'
 if (Test-Path $ExtDest) { Remove-Item $ExtDest -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $DocsDir | Out-Null
 Copy-Item (Join-Path $Dir 'extension') $ExtDest -Recurse
-Write-Host '[OK] wtyczka skopiowana do: Dokumenty\Potok Video\wtyczka'
+Write-Host '[OK] wtyczka skopiowana do: Dokumenty\Grabbo\wtyczka'
 
 Write-Host ''
 Write-Host 'Pomocnik zainstalowany.' -ForegroundColor Green

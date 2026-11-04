@@ -2,6 +2,7 @@ import {
   isSupportedSite, cookiesFor, getSettings, native, fmtForQuality, qualityLabel,
   isAdLibrary, adInfoFor, adName, adMeta, safeName, stamp
 } from './sites.js';
+import { t, initLang } from './i18n.js';
 
 const MAX_ITEMS = 30;
 const MIN_FILE_SIZE = 150 * 1024; // mniejsze pliki to zwykle ikonki/podglądy
@@ -197,14 +198,16 @@ chrome.downloads.onChanged.addListener(async (delta) => {
   chrome.downloads.erase({ id: delta.id }).catch(() => {});
 });
 
-// ---- prawy klik: „Potok Video: pobierz…” ----
-chrome.runtime.onInstalled.addListener(() => {
+// ---- prawy klik: „Grabbo: pobierz…” ----
+function buildMenus() {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: 'pv-video', title: 'Potok Video: pobierz to wideo', contexts: ['video'] });
-    chrome.contextMenus.create({ id: 'pv-link', title: 'Potok Video: pobierz wideo z linku', contexts: ['link'] });
-    chrome.contextMenus.create({ id: 'pv-page', title: 'Potok Video: pobierz wideo z tej strony', contexts: ['page'] });
+    chrome.contextMenus.create({ id: 'pv-video', title: t('Grabbo: pobierz to wideo'), contexts: ['video'] });
+    chrome.contextMenus.create({ id: 'pv-link', title: t('Grabbo: pobierz wideo z linku'), contexts: ['link'] });
+    chrome.contextMenus.create({ id: 'pv-page', title: t('Grabbo: pobierz wideo z tej strony'), contexts: ['page'] });
   });
-});
+}
+const langReady = initLang(buildMenus); // zmiana języka w ustawieniach -> nowe podpisy menu
+chrome.runtime.onInstalled.addListener(() => langReady.then(buildMenus));
 
 async function flashBadge(tabId, text, color) {
   try {
@@ -216,7 +219,7 @@ async function flashBadge(tabId, text, color) {
 
 async function queueDownload(tab, { url, page, kind }) {
   const settings = await getSettings();
-  let title = null, meta = null, display = tab?.title || 'Wideo';
+  let title = null, meta = null, display = tab?.title || t('Wideo');
   if (kind === 'file') { // bezpośredni plik — nazwa ze strony albo z Biblioteki reklam
     const ad = isAdLibrary(page) && tab ? await adInfoFor(tab.id, url) : null;
     if (ad) {

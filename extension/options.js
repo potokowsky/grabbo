@@ -1,4 +1,5 @@
 import { DEFAULTS, QUALITIES, getSettings, native } from './sites.js';
+import { t, LANGS, setLang, applyI18n } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const BOOLS = ['subs', 'storyboard', 'swipe', 'stripMeta', 'smartNames', 'adDays'];
@@ -12,13 +13,25 @@ const flash = () => {
 const save = async (patch) => { await chrome.storage.sync.set(patch); flash(); };
 
 function showDir(dir) {
-  $('outDirLabel').textContent = dir || `Domyślny${defaultDir ? ' — ' + defaultDir : ''}`;
+  $('outDirLabel').textContent = dir || (defaultDir ? t('Domyślny — {0}', defaultDir) : t('Domyślny'));
   $('reset').hidden = !dir;
 }
 
 (async () => {
   const s = await getSettings();
-  for (const [v, label] of QUALITIES) $('defaultQuality').append(new Option(label, v));
+  setLang(s.lang);
+  applyI18n();
+  for (const [v, label] of LANGS) $('lang').append(new Option(label, v));
+  $('lang').value = s.lang;
+  $('lang').onchange = async (e) => {
+    setLang(e.target.value);
+    applyI18n();
+    for (const o of $('defaultQuality').options) o.textContent = t(QUALITIES.find(([v]) => v === o.value)[1]);
+    showShortcut();
+    showDir((await getSettings()).outDir);
+    await save({ lang: e.target.value });
+  };
+  for (const [v, label] of QUALITIES) $('defaultQuality').append(new Option(t(label), v));
   $('defaultQuality').value = s.defaultQuality;
   $('defaultQuality').onchange = (e) => save({ defaultQuality: e.target.value });
 
@@ -27,9 +40,9 @@ function showDir(dir) {
     $(k).onchange = (e) => save({ [k]: e.target.checked });
   }
 
-  const showShortcut = async () => {
+  async function showShortcut() {
     const cmd = (await chrome.commands.getAll()).find((c) => c.name === 'download-current');
-    $('shortcut').textContent = cmd?.shortcut || 'brak';
+    $('shortcut').textContent = cmd?.shortcut || t('brak');
   };
   showShortcut();
   window.addEventListener('focus', showShortcut);
@@ -45,7 +58,7 @@ function showDir(dir) {
     const r = await native({ action: 'pick_folder' });
     $('pick').disabled = false;
     if (r.ok && r.path) { await save({ outDir: r.path }); showDir(r.path); }
-    else if (r.nohost) $('outDirLabel').textContent = 'Pomocnik nie odpowiada — uruchom instalator.';
+    else if (r.nohost) $('outDirLabel').textContent = t('Pomocnik nie odpowiada — uruchom instalator.');
   };
   $('reset').onclick = async () => { await save({ outDir: DEFAULTS.outDir }); showDir(''); };
 })();
