@@ -75,7 +75,15 @@ echo "$VERSION" > "$PAYLOAD/VERSION"
 echo "== pkg"
 chmod +x packaging/mac/scripts/*
 PKG="$ROOT/dist/Grabbo-$VERSION-mac-$ARCH.pkg"
-pkgbuild --root "$PAYLOAD" --scripts packaging/mac/scripts \
+# bez tego Instalator może „przenieść” Python.framework z pomocnika w miejsce innej kopii o tym samym ID
+COMP="$WORK/components.plist"
+pkgbuild --analyze --root "$PAYLOAD" "$COMP"
+n=0
+while plutil -extract "$n" raw "$COMP" >/dev/null 2>&1; do
+  plutil -replace "$n.BundleIsRelocatable" -bool NO "$COMP"
+  n=$((n + 1))
+done
+pkgbuild --root "$PAYLOAD" --component-plist "$COMP" --scripts packaging/mac/scripts \
   --identifier com.grabbo.app --version "$VERSION" \
   --install-location "/Library/Application Support/Grabbo/installer" \
   "$PKG"
