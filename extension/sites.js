@@ -72,7 +72,7 @@ export const safeName = (s) => (s || 'wideo').replace(/^\(\d+\+?\)\s*/, '')
 export const stamp = () => new Date().toTimeString().slice(0, 8).replace(/:/g, '.');
 
 export const native = (msg) => new Promise((resolve) => {
-  chrome.runtime.sendNativeMessage('com.potok.video', msg, (r) => {
+  chrome.runtime.sendNativeMessage('com.grabbo.app', msg, (r) => {
     if (chrome.runtime.lastError) resolve({ ok: false, nohost: true, error: chrome.runtime.lastError.message });
     else resolve(r || { ok: false, error: 'Brak odpowiedzi od pomocnika' });
   });

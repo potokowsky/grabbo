@@ -1,11 +1,11 @@
-POTOK VIDEO — pobieranie wideo z przeglądarki (Mac / Windows + Brave lub Chrome)
+GRABBO — pobieranie wideo z przeglądarki (Mac / Windows + Brave lub Chrome)
 ================================================================================
 
 Co to robi:
 Ikonka wtyczki robi się zielona, gdy na stronie jest wideo (YouTube, Instagram,
 TikTok, Facebook, Biblioteka reklam Meta, większość stron z filmami).
 Klikasz ją, wybierasz jakość i plik ląduje w:
-  Mac:     Pobrane / Potok Video
+  Mac:     Pobrane / Grabbo
   Windows: Pobrane
 
 
@@ -20,14 +20,14 @@ CO POTRAFI (wersja 2.1)
 - Napisy SRT: razem z filmem albo osobno przyciskiem "Napisy SRT".
 - Storyboard: obrazek z klatkami filmu zapisany obok pliku.
 - Swipe file: swipe-file.csv w folderze z pobranymi (link, autor, wyświetlenia…).
-- Prawy klik na stronie / filmie / linku → "Potok Video: pobierz…".
+- Prawy klik na stronie / filmie / linku → "Grabbo: pobierz…".
 - Ustawienia (⚙ w okienku): domyślna jakość, folder, co robić po pobraniu.
 
 
 INSTALACJA NA MACU (jednorazowo, ok. 5–10 minut)
 ------------------------------------------------
 
-1. Rozpakuj zip (dwuklik). Powstanie folder "potok-video".
+1. Rozpakuj zip (dwuklik). Powstanie folder "grabbo".
 
 2. W folderze kliknij dwa razy "Zainstaluj-Mac.command".
 
@@ -52,7 +52,7 @@ INSTALACJA NA MACU (jednorazowo, ok. 5–10 minut)
    - przeciągnij folder "wtyczka" z Findera na tę stronę
      (albo "Załaduj rozpakowane" i wskaż folder "wtyczka").
 
-6. Kliknij ikonkę puzzla obok paska adresu → pinezka przy "Potok Video".
+6. Kliknij ikonkę puzzla obok paska adresu → pinezka przy "Grabbo".
 
 7. Zamknij przeglądarkę całkowicie (⌘ + Q) i otwórz ponownie.
 
@@ -71,7 +71,7 @@ INSTALACJA NA WINDOWSIE (jednorazowo, ok. 5–10 minut)
 3. Instalator sam pobierze potrzebne narzędzia (yt-dlp, ffmpeg, Python).
    Jeśli Windows zapyta "Czy zezwolić na wprowadzanie zmian" — kliknij Tak.
 
-4. Gdy pojawi się "Pomocnik zainstalowany", otworzy się folder Dokumenty\Potok Video.
+4. Gdy pojawi się "Pomocnik zainstalowany", otworzy się folder Dokumenty\Grabbo.
 
 5. Dalej tak samo jak na Macu: brave://extensions (lub chrome://extensions) →
    "Tryb dewelopera" → "Załaduj rozpakowane" → folder "wtyczka" →
@@ -93,8 +93,8 @@ GDY COŚ NIE DZIAŁA
   W Brave: wyłącz tarczę (lew w pasku adresu) dla tej strony.
 - YouTube przestał pobierać → Mac (Terminal): brew upgrade yt-dlp
                                Windows (cmd):   winget upgrade yt-dlp.yt-dlp
-- Logi pobrań: Mac: Finder → ⌘⇧G → ~/Library/Application Support/PotokVideo/logs
-               Windows: wpisz w pasku Eksploratora %LOCALAPPDATA%\PotokVideo\logs
+- Logi pobrań: Mac: Finder → ⌘⇧G → ~/Library/Application Support/Grabbo/logs
+               Windows: wpisz w pasku Eksploratora %LOCALAPPDATA%\Grabbo\logs
 
 Nie da się pobrać filmów z zabezpieczeniem DRM (Netflix, Disney+, część płatnych
 platform kursowych) — to ograniczenie techniczne, nie błąd wtyczki.

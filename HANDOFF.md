@@ -79,7 +79,7 @@ INSTRUKCJA.txt      instrukcja dla testerów (PL, CRLF)
 
 Sklep odpada: regulamin zabrania pobierania z YouTube, a i tak nie da się z przeglądarki zainstalować pomocnika. Plan:
 
-1. **Zmiana nazwy na „Grabbo”** wszędzie: `manifest.json` (name, description), popup/options/notyfikacje, foldery (`~/Downloads/Grabbo`, `APP_DIR` → `Grabbo`), host `com.potok.video` → np. `com.grabbo.app`, instalatory, INSTRUKCJA. **Klucz/ID wtyczki zostaje.** Nowy instalator ma **posprzątać starą instalację** „Potok Video” (usunąć `PotokVideo` i rejestracje `com.potok.video` w Brave/Chrome, na Windowsie klucze rejestru HKCU).
+1. ✅ *(zrobione w 2.2.0: host `com.grabbo.app`, `host/grabbo_host.py`, foldery `Grabbo`)* **Zmiana nazwy na „Grabbo”** wszędzie: `manifest.json` (name, description), popup/options/notyfikacje, foldery (`~/Downloads/Grabbo`, `APP_DIR` → `Grabbo`), host `com.potok.video` → np. `com.grabbo.app`, instalatory, INSTRUKCJA. **Klucz/ID wtyczki zostaje.** Nowy instalator ma **posprzątać starą instalację** „Potok Video” (usunąć `PotokVideo` i rejestracje `com.potok.video` w Brave/Chrome, na Windowsie klucze rejestru HKCU).
 2. **Prawdziwe instalatory bez Homebrew/winget/Pythona**:
    - pomocnik jako binarka (PyInstaller) + dołączone yt-dlp (oficjalne binarki standalone, mają curl_cffi), ffmpeg/ffprobe, deno;
    - Mac: `.pkg` (bez podpisu na start → „Otwórz mimo to”; Apple Developer 99 $/rok opcjonalnie później), **najpierw Mac, potem Windows** (`.exe`, np. Inno Setup; SmartScreen → „Uruchom mimo to”);

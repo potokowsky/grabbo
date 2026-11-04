@@ -197,12 +197,12 @@ chrome.downloads.onChanged.addListener(async (delta) => {
   chrome.downloads.erase({ id: delta.id }).catch(() => {});
 });
 
-// ---- prawy klik: „Potok Video: pobierz…” ----
+// ---- prawy klik: „Grabbo: pobierz…” ----
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: 'pv-video', title: 'Potok Video: pobierz to wideo', contexts: ['video'] });
-    chrome.contextMenus.create({ id: 'pv-link', title: 'Potok Video: pobierz wideo z linku', contexts: ['link'] });
-    chrome.contextMenus.create({ id: 'pv-page', title: 'Potok Video: pobierz wideo z tej strony', contexts: ['page'] });
+    chrome.contextMenus.create({ id: 'pv-video', title: 'Grabbo: pobierz to wideo', contexts: ['video'] });
+    chrome.contextMenus.create({ id: 'pv-link', title: 'Grabbo: pobierz wideo z linku', contexts: ['link'] });
+    chrome.contextMenus.create({ id: 'pv-page', title: 'Grabbo: pobierz wideo z tej strony', contexts: ['page'] });
   });
 });
 

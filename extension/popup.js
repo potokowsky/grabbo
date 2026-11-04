@@ -222,7 +222,7 @@ function fileCard(item, ad) {
       return;
     }
     chrome.downloads.download({
-      url: item.url, filename: `${WIN ? '' : 'Potok Video/'}${name}.${ext}`, conflictAction: 'uniquify'
+      url: item.url, filename: `${WIN ? '' : 'Grabbo/'}${name}.${ext}`, conflictAction: 'uniquify'
     }, async (id) => {
       if (chrome.runtime.lastError || id === undefined) {
         dl.textContent = 'Nie wyszło — użyj „przez pomocnika”';

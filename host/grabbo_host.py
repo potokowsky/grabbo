@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Potok Video — pomocnik (native messaging host) dla wtyczki w Brave/Chrome (macOS + Windows).
+"""Grabbo — pomocnik (native messaging host) dla wtyczki w Brave/Chrome (macOS + Windows).
 
 Brave uruchamia ten skrypt na chwilę, gdy wtyczka czegoś potrzebuje:
   probe    -> lista dostępnych jakości (yt-dlp -J)
@@ -33,17 +33,17 @@ if WIN:
             pass
     parts.append(os.environ.get("PATH", ""))
     os.environ["PATH"] = ";".join(parts)
-    APP_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "PotokVideo")
+    APP_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Grabbo")
     NO_WINDOW = subprocess.CREATE_NO_WINDOW
 else:
     os.environ["PATH"] = ":".join([
         "/opt/homebrew/bin", "/usr/local/bin", os.path.expanduser("~/.local/bin"),
         os.path.expanduser("~/.deno/bin"), os.environ.get("PATH", "/usr/bin:/bin"),
     ])
-    APP_DIR = os.path.expanduser("~/Library/Application Support/PotokVideo")
+    APP_DIR = os.path.expanduser("~/Library/Application Support/Grabbo")
     NO_WINDOW = 0
 
-OUT_DIR = os.path.join(os.path.expanduser("~"), "Downloads", *([] if WIN else ["Potok Video"]))
+OUT_DIR = os.path.join(os.path.expanduser("~"), "Downloads", *([] if WIN else ["Grabbo"]))
 LOG_DIR = os.path.join(APP_DIR, "logs")
 TXT = {"text": True, "encoding": "utf-8", "errors": "replace", "creationflags": NO_WINDOW}
 SORT = "res,fps,vcodec:h264,acodec:aac"  # h264 = bez problemów w DaVinci / QuickTime
@@ -247,13 +247,13 @@ def notify(title, text):
                 "'{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe')"
                 ".Show([Windows.UI.Notifications.ToastNotification]::new($x))"
             )
-            env = dict(os.environ, PV_T="Potok Video — " + title, PV_B=text)
+            env = dict(os.environ, PV_T="Grabbo — " + title, PV_B=text)
             subprocess.run(["powershell", "-NoProfile", "-Command", ps], env=env,
                            capture_output=True, creationflags=NO_WINDOW, timeout=15)
         elif shutil.which("osascript"):
             subprocess.run([
                 "osascript", "-e", "on run argv",
-                "-e", 'display notification (item 2 of argv) with title "Potok Video" subtitle (item 1 of argv)',
+                "-e", 'display notification (item 2 of argv) with title "Grabbo" subtitle (item 1 of argv)',
                 "-e", "end run", title, text,
             ], capture_output=True)
     except Exception:  # noqa: BLE001 — powiadomienie to dodatek
@@ -658,14 +658,14 @@ def pick_folder():
         ps = ("Add-Type -AssemblyName System.Windows.Forms;"
               "[Console]::OutputEncoding=[Text.Encoding]::UTF8;"
               "$f=New-Object System.Windows.Forms.FolderBrowserDialog;"
-              "$f.Description='Wybierz folder dla Potok Video';"
+              "$f.Description='Wybierz folder dla Grabbo';"
               "$o=New-Object System.Windows.Forms.Form -Property @{TopMost=$true};"
               "if($f.ShowDialog($o) -eq 'OK'){$f.SelectedPath}")
         r = run_quiet(["powershell", "-NoProfile", "-STA", "-Command", ps])
     else:
         r = run_quiet(["osascript", "-e",
                        'tell application (path to frontmost application as text) to '
-                       'POSIX path of (choose folder with prompt "Wybierz folder dla Potok Video")'])
+                       'POSIX path of (choose folder with prompt "Wybierz folder dla Grabbo")'])
     path = (r.stdout or "").strip()
     if not path:
         return {"ok": False, "cancel": True}
