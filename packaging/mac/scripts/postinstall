@@ -1,0 +1,71 @@
+#!/bin/bash
+# Grabbo — postinstall pakietu .pkg (uruchamiany przez Instalator jako root).
+# Pliki z pakietu lądują w /Library/Application Support/Grabbo/installer, a stąd kopiujemy je
+# na konto zalogowanego użytkownika — tak jak install.sh (yt-dlp -U musi móc nadpisać swoją binarkę).
+set -e
+
+SRC="/Library/Application Support/Grabbo/installer"
+EXT_ID="mblaggcfnacfohhkkkgonhilbmfolbba"
+HOST_NAME="com.grabbo.app"
+
+U="$(stat -f%Su /dev/console)"
+if [ -z "$U" ] || [ "$U" = "root" ] || [ "$U" = "loginwindow" ]; then
+  U="${SUDO_USER:-${USER:-}}"
+fi
+H="$(dscl . -read "/Users/$U" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+[ -n "$H" ] && [ -d "$H" ] || { echo "Grabbo: nie znalazłem katalogu domowego użytkownika $U"; exit 1; }
+
+as_user() { sudo -u "$U" "$@"; }
+
+APP="$H/Library/Application Support/Grabbo"
+EXT_DEST="$H/Documents/Grabbo/wtyczka"
+
+# 0. Sprzątanie: stara „Potok Video” i wersja skryptowa (grabbo_host.py)
+as_user rm -rf "$H/Library/Application Support/PotokVideo" "$H/Documents/Potok Video/wtyczka"
+as_user rmdir "$H/Documents/Potok Video" 2>/dev/null || true
+as_user rm -rf "$APP/grabbo_host.py" "$APP/host" "$APP/bin"
+
+# 1. Pomocnik + narzędzia
+as_user mkdir -p "$APP/logs"
+as_user ditto "$SRC/host" "$APP/host"
+as_user ditto "$SRC/bin" "$APP/bin"
+as_user cp "$SRC/uninstall.sh" "$APP/uninstall.sh"
+as_user cp "$SRC/VERSION" "$APP/VERSION"
+rm -f "$APP/last_update"
+
+# 2. Wtyczka — stałe miejsce, które tester wgrywa w trybie dewelopera
+as_user mkdir -p "$EXT_DEST"
+as_user rm -rf "$EXT_DEST"
+as_user ditto "$SRC/extension" "$EXT_DEST"
+
+# 3. Rejestracja pomocnika w Brave i Chrome (także gdy przeglądarka nie była jeszcze uruchomiona)
+for B in "BraveSoftware/Brave-Browser" "Google/Chrome"; do
+  D="$H/Library/Application Support/$B/NativeMessagingHosts"
+  as_user rm -f "$D/com.potok.video.json"
+  if [ -d "$H/Library/Application Support/$B" ] || [ "$B" = "BraveSoftware/Brave-Browser" ]; then
+    as_user mkdir -p "$D"
+    as_user tee "$D/$HOST_NAME.json" >/dev/null <<EOF
+{
+  "name": "$HOST_NAME",
+  "description": "Grabbo helper",
+  "path": "$APP/host/grabbo_host",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://$EXT_ID/"]
+}
+EOF
+  fi
+done
+
+as_user mkdir -p "$H/Downloads/Grabbo"
+
+# Brave oznacza pobraną paczkę kwarantanną, a Instalator przenosi ją na pliki. Binarki podpisane ad-hoc
+# z kwarantanną macOS uznaje za „uszkodzone” — zdejmujemy ją z każdego pliku osobno (także z symlinków).
+find "$APP" "$EXT_DEST" -exec xattr -d -s com.apple.quarantine {} \; 2>/dev/null || true
+
+# 4. Kopia z pakietu nie jest już potrzebna
+rm -rf "$SRC"
+rmdir "/Library/Application Support/Grabbo" 2>/dev/null || true
+
+# 5. Pokaż folder z wtyczką
+launchctl asuser "$(id -u "$U")" sudo -u "$U" open "$H/Documents/Grabbo" 2>/dev/null || true
+exit 0

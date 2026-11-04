@@ -1,0 +1,81 @@
+name: Build macOS installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+    paths:
+      - "host/**"
+      - "extension/**"
+      - "packaging/mac/**"
+      - "uninstall.sh"
+      - ".github/workflows/build-mac.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15        # Apple Silicon
+            arch: arm64
+          - runner: macos-15-intel  # Intel
+            arch: intel
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: python3 -m pip install --upgrade pip pyinstaller
+
+      - name: Build .pkg
+        run: bash packaging/mac/build.sh
+
+      - name: Test install on runner
+        run: |
+          set -euo pipefail
+          PKG="$(ls dist/Grabbo-*-mac-${{ matrix.arch }}.pkg)"
+          # jak po pobraniu przez Brave: paczka z kwarantanną
+          xattr -w com.apple.quarantine "0083;$(printf %x "$(date +%s)");Brave Browser;" "$PKG"
+          sudo installer -pkg "$PKG" -target /
+          APP="$HOME/Library/Application Support/Grabbo"
+          MAN="$HOME/Library/Application Support/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.grabbo.app.json"
+          cat "$MAN"
+          ls -la "$APP" "$APP/bin" "$HOME/Documents/Grabbo/wtyczka"
+          test ! -e "/Library/Application Support/Grabbo/installer"
+          Q="$(find "$APP" "$HOME/Documents/Grabbo" -exec xattr -s -p com.apple.quarantine {} \; -print 2>/dev/null | grep -c '^/' || true)"
+          echo "files with quarantine: $Q"
+          test "$Q" = 0
+          codesign --verify --deep --strict -v "$APP/host/_internal/Python.framework" || true
+          spctl --assess --type execute -v "$APP/host/grabbo_host" || true
+          EXE="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["path"])' "$MAN")"
+          python3 - "$EXE" <<'PY'
+          import json, struct, subprocess, sys
+          msg = json.dumps({"action": "ping"}).encode()
+          r = subprocess.run([sys.argv[1], "chrome-extension://mblaggcfnacfohhkkkgonhilbmfolbba/"],
+                             input=struct.pack("<I", len(msg)) + msg, capture_output=True, timeout=60,
+                             env={"PATH": "/usr/bin:/bin", "HOME": __import__("os").environ["HOME"]})
+          n = struct.unpack("<I", r.stdout[:4])[0]
+          res = json.loads(r.stdout[4:4 + n])
+          print(res)
+          assert res == {"ok": True, "ytdlp": True, "ffmpeg": True}, res
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Grabbo-mac-${{ matrix.arch }}
+          path: dist/*.pkg
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.pkg

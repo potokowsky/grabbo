@@ -1,0 +1,3 @@
+#!/bin/sh
+# Grabbo: yt-dlp w wersji folderowej (bin/yt-dlp-dist), żeby nie rozpakowywał się przy każdym starcie
+exec "$(dirname "$0")/yt-dlp-dist/yt-dlp_macos" "$@"

@@ -19,6 +19,10 @@ import threading
 import time
 
 WIN = sys.platform == "win32"
+FROZEN = getattr(sys, "frozen", False)  # binarka z PyInstallera (instalator .pkg/.exe)
+if FROZEN:
+    # procesy potomne z PyInstallera (yt-dlp, nasz worker) mają startować jako nowe instancje
+    os.environ["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
 
 if WIN:
     # PATH z rejestru — żeby świeżo zainstalowane narzędzia działały bez restartu przeglądarki
@@ -42,6 +46,11 @@ else:
     ])
     APP_DIR = os.path.expanduser("~/Library/Application Support/Grabbo")
     NO_WINDOW = 0
+
+# dołączone narzędzia (yt-dlp, ffmpeg, ffprobe, deno) mają pierwszeństwo przed Homebrew/winget
+BIN_DIR = os.path.join(APP_DIR, "bin")
+if os.path.isdir(BIN_DIR):
+    os.environ["PATH"] = BIN_DIR + os.pathsep + os.environ["PATH"]
 
 OUT_DIR = os.path.join(os.path.expanduser("~"), "Downloads", *([] if WIN else ["Grabbo"]))
 LOG_DIR = os.path.join(APP_DIR, "logs")
@@ -687,12 +696,13 @@ def start_download(m):
         json.dump(m, fh)
     exe = sys.executable
     extra = {"start_new_session": True}  # przeżyje zamknięcie połączenia z przeglądarką
-    if WIN:
+    if WIN and not FROZEN:
         pyw = os.path.join(os.path.dirname(exe), "pythonw.exe")
         exe = pyw if os.path.exists(pyw) else exe
+    if WIN:
         extra = {"creationflags": subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
                  | subprocess.CREATE_BREAKAWAY_FROM_JOB | NO_WINDOW}
-    args = [exe, os.path.abspath(__file__), "--worker", spec]
+    args = [exe, *([] if FROZEN else [os.path.abspath(__file__)]), "--worker", spec]
     errlog = open(os.path.join(LOG_DIR, "worker-errors.log"), "a")
     try:
         subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=errlog, **extra)
@@ -724,6 +734,23 @@ def pick_folder():
     return {"ok": True, "path": path.rstrip("/\\") or path}
 
 
+YTDLP_MAC_UPDATE = r"""
+set -e
+cd "$1"
+tag="$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/yt-dlp/yt-dlp/releases/latest)"
+tag="${tag##*/}"
+[ -n "$tag" ] && [ "$tag" != "$(./yt-dlp --version)" ] || exit 0
+rm -rf yt-dlp-new yt-dlp-old yt-dlp-new.zip
+curl -fsSL -o yt-dlp-new.zip "https://github.com/yt-dlp/yt-dlp/releases/download/$tag/yt-dlp_macos.zip"
+ditto -x -k yt-dlp-new.zip yt-dlp-new
+find yt-dlp-new -exec xattr -d -s com.apple.quarantine {} \; 2>/dev/null || true
+yt-dlp-new/yt-dlp_macos --version
+mv yt-dlp-dist yt-dlp-old && mv yt-dlp-new yt-dlp-dist
+rm -rf yt-dlp-old yt-dlp-new.zip
+echo "yt-dlp -> $tag"
+"""
+
+
 def maybe_update():
     """Co 3 dni po cichu aktualizuje yt-dlp — serwisy często zmieniają odtwarzacze."""
     stamp = os.path.join(APP_DIR, "last_update")
@@ -736,7 +763,17 @@ def maybe_update():
     with open(stamp, "w") as fh:
         fh.write(time.strftime("%Y-%m-%d %H:%M"))
     log = open(os.path.join(LOG_DIR, "update.log"), "a")
-    if WIN:
+    bundled = os.path.join(BIN_DIR, "yt-dlp.exe" if WIN else "yt-dlp")
+    if not WIN and os.path.isdir(os.path.join(BIN_DIR, "yt-dlp-dist")):
+        # yt-dlp w folderze nie ma -U: pobieramy nowe wydanie i podmieniamy folder
+        cmd = ["/bin/sh", "-c", YTDLP_MAC_UPDATE, "sh", BIN_DIR]
+        extra = {"start_new_session": True}
+    elif os.path.exists(bundled):
+        # binarka standalone aktualizuje się sama
+        cmd = [bundled, "-U"]
+        extra = ({"creationflags": subprocess.DETACHED_PROCESS | NO_WINDOW} if WIN
+                 else {"start_new_session": True})
+    elif WIN:
         if not shutil.which("winget"):
             return
         cmd = ["winget", "upgrade", "--id", "yt-dlp.yt-dlp", "-e", "--silent",
