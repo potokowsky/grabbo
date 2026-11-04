@@ -1,5 +1,5 @@
 GRABBO — pobieranie wideo z przeglądarki (Mac / Windows + Brave lub Chrome)
-================================================================================
+===========================================================================
 
 Co to robi:
 Ikonka wtyczki robi się zielona, gdy na stronie jest wideo (YouTube, Instagram,
@@ -9,10 +9,13 @@ Klikasz ją, wybierasz jakość i plik ląduje w:
   Windows: Pobrane
 
 
-CO POTRAFI (wersja 2.1)
+CO POTRAFI (wersja 2.3)
 -----------------------
 - Wybór jakości (★ = domyślna z ustawień), pasek postępu, miniaturki.
 - "Pobierz wszystkie" — gdy na stronie jest kilka filmów; pobierają się po kolei.
+  Zaznacz checkboxy przy wybranych filmach → "Pobierz zaznaczone".
+  W Bibliotece reklam Meta obok jest filtr: tylko reklamy aktywne 7+/30+… dni.
+- Nieudane pobieranie → przycisk "↻ Ponów" w sekcji "Pobierane".
 - Skrót klawiszowy Alt+Shift+D (Mac: ⌥⇧D) — pobiera film z bieżącej karty.
 - Biblioteka reklam Meta: nazwy plików Reklamodawca_ID_data-startu.
   Plus liczba dni, od kiedy reklama jest aktywna.

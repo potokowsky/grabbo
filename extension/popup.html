@@ -13,7 +13,13 @@
   </header>
   <div id="host-warning" class="warn" hidden></div>
   <section id="jobs" hidden></section>
-  <div id="all" hidden><button class="primary wide"></button></div>
+  <div id="all" hidden>
+    <button class="primary wide"></button>
+    <select title="Tylko reklamy aktywne co najmniej tyle dni">
+      <option value="0">wszystkie</option><option value="7">7+ dni</option><option value="14">14+ dni</option>
+      <option value="30">30+ dni</option><option value="60">60+ dni</option><option value="90">90+ dni</option>
+    </select>
+  </div>
   <main id="list"></main>
   <footer>
     <button id="open" class="ghost">Otwórz folder „Grabbo”</button>

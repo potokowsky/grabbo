@@ -13,7 +13,8 @@ let tab;
 let settings;
 let hostJobs = [];
 let lastHostPoll = 0;
-const quickActions = []; // „Pobierz wszystkie” — po jednej funkcji na kartę
+const quickActions = []; // „Pobierz wszystkie / zaznaczone” — { run, card, cb, days } na kartę
+let minDays = 0;           // filtr Biblioteki reklam: tylko reklamy aktywne min. N dni
 
 const fmtSize = (b) => {
   if (!b) return '';
@@ -61,10 +62,41 @@ function thumb({ img, video, cls = 'thumb', onMeta }) {
 
 async function startHelper(msg, onError) {
   const res = await native({ action: 'download', settings, ...msg });
-  if (res.ok) { lastHostPoll = 0; refreshJobs(); return true; }
+  if (res.ok) { rememberJob(res.job, msg); lastHostPoll = 0; refreshJobs(); return true; }
   if (res.nohost) showHostWarning(res.error);
   onError?.(res.error || 'nieznany błąd');
   return false;
+}
+
+// ---------- „Ponów” — zadania pomocnika zapamiętane w storage.session (bez ciasteczek) ----------
+async function rememberJob(id, msg) {
+  if (!id) return;
+  const { retry = {} } = await chrome.storage.session.get('retry');
+  const { cookies, ...rest } = msg;
+  retry[id] = rest;
+  const keys = Object.keys(retry).sort();
+  for (const k of keys.slice(0, Math.max(0, keys.length - 40))) delete retry[k];
+  await chrome.storage.session.set({ retry });
+}
+
+async function retryJob(id) {
+  const { retry = {}, retried = [] } = await chrome.storage.session.get(['retry', 'retried']);
+  const msg = retry[id];
+  if (!msg) return;
+  await chrome.storage.session.set({ retried: [...retried, id].slice(-40) });
+  const cookies = await cookiesFor([msg.url, msg.referer]);
+  await startHelper({ ...msg, cookies }, (e) => showHostWarning(e));
+}
+
+// ---------- zaznaczanie checkboxem + udział w „Pobierz wszystkie” ----------
+function addPick(card, run, days = null) {
+  const cb = el('input', 'pick');
+  cb.type = 'checkbox';
+  cb.title = 'Zaznacz do pobrania';
+  cb.onchange = updateAll;
+  card.querySelector('.top').prepend(cb);
+  quickActions.push({ run, card, cb, days });
+  updateAll();
 }
 
 // ---------- karta obsługiwana przez pomocnika (YouTube, HLS, osadzone itd.) ----------
@@ -114,11 +146,11 @@ function helperCard({ tag, title, meta, url, referer, name, extraMeta }) {
     subs: probe?.subs || [], section, meta: extraMeta || null
   });
 
-  quickActions.push(async () => {
+  addPick(card, async () => {
     await cookiesReady;
     const q = settings.defaultQuality;
     return startHelper(dlMsg({ fmt: fmtForQuality(q), audio: q === 'audio', label: qualityLabel(q) }), err);
-  });
+  }, extraMeta?.adStart ? adDays(extraMeta.adStart) : null);
 
   (async () => {
     await cookiesReady;
@@ -240,18 +272,18 @@ function fileCard(item, ad) {
     });
   });
   dl.onclick = () => download();
-  quickActions.push(() => download(true));
+  card.append($thumb, body, $opts, $status);
+  addPick(card, () => download(true), ad?.start ? adDays(ad.start) : null);
   const viaHelper = el('button', 'link', 'przez pomocnika');
   viaHelper.onclick = () => card.replaceWith(helperCard({
     tag: ext.toUpperCase(), title: display, url: item.url, referer: tab.url, name, extraMeta: meta
   }));
   $opts.append(dl, viaHelper);
-  card.append($thumb, body, $opts, $status);
   return card;
 }
 
 // ---------- sekcja „Pobierane” ----------
-function jobRow({ title, label, img, video, pct, status, sub, onOpen, error }) {
+function jobRow({ title, label, img, video, pct, status, sub, onOpen, error, onRetry }) {
   const row = el('div', 'job' + (status === 'done' ? ' is-done' : '') + (status === 'error' ? ' is-err' : ''));
   row.append(thumb({ img, video, cls: 'thumb sm' }));
   const body = el('div', 'body');
@@ -265,6 +297,12 @@ function jobRow({ title, label, img, video, pct, status, sub, onOpen, error }) {
   body.append(top, bar, el('div', 'jinfo', error || sub || ''));
   row.append(body);
   if (onOpen && status === 'done') { row.classList.add('clickable'); row.title = 'Pokaż ' + SHOW_IN; row.onclick = onOpen; }
+  if (onRetry && status === 'error') {
+    const b = el('button', 'tool retry', '↻ Ponów');
+    b.title = 'Spróbuj pobrać jeszcze raz';
+    b.onclick = (e) => { e.stopPropagation(); b.disabled = true; b.textContent = 'Ponawiam…'; onRetry(); };
+    row.append(b);
+  }
   return row;
 }
 
@@ -286,8 +324,10 @@ async function doRefreshJobs() {
   const browser = bdl.length ? await chrome.downloads.search({}) : [];
   const byId = new Map(browser.map((d) => [d.id, d]));
 
+  const { retry = {}, retried = [] } = await chrome.storage.session.get(['retry', 'retried']);
   const rows = [];
   for (const j of hostJobs) {
+    if (retried.includes(j.id)) continue; // zastąpione nowym zadaniem
     let sub;
     if (j.status === 'done') sub = 'Gotowe ✓ · kliknij, żeby pokazać ' + SHOW_IN;
     else if (j.status === 'merge') sub = 'Łączę obraz i dźwięk…';
@@ -299,8 +339,9 @@ async function doRefreshJobs() {
     rows.push({ t: j.started * 1000, node: jobRow({
       title: j.title, label: j.label, img: j.thumb, pct: ['merge', 'post'].includes(j.status) ? 100 : j.pct,
       status: j.status, sub, error: j.status === 'error' ? 'Błąd: ' + j.error : null,
-      onOpen: () => native({ action: 'reveal', path: j.file })
-    }) });
+      onOpen: () => native({ action: 'reveal', path: j.file }),
+      onRetry: retry[j.id] ? () => retryJob(j.id) : null
+    }), key: j.id + j.status });
   }
   for (const b of bdl) {
     const d = byId.get(b.id);
@@ -315,13 +356,14 @@ async function doRefreshJobs() {
         : `${Math.round(pct)}% · ${fmtSize(d.bytesReceived)} z ${fmtSize(d.totalBytes)}`,
       error: err ? 'Przerwane — przełączam na pomocnika…' : null,
       onOpen: () => chrome.downloads.show(b.id)
-    }) });
+    }), key: b.id + d.state });
   }
 
   rows.sort((a, b) => b.t - a.t);
   const shown = rows.slice(0, 6);
   const existing = [...$jobs.querySelectorAll('.job')];
-  if (existing.length === shown.length && shown.length) {
+  const sig = shown.map((r) => r.key).join('|');
+  if ($jobs.dataset.sig === sig && existing.length === shown.length && shown.length) {
     shown.forEach((r, i) => {
       const old = existing[i];
       old.className = r.node.className;
@@ -331,6 +373,7 @@ async function doRefreshJobs() {
     });
   } else {
     $jobs.replaceChildren();
+    $jobs.dataset.sig = sig;
     if (shown.length) {
       const head = el('div', 'jhead');
       head.append(el('span', null, 'Pobierane'));
@@ -393,23 +436,51 @@ async function render() {
     $list.append(empty);
   }
 
-  // „Pobierz wszystkie” — gdy jest więcej niż jeden film
-  $all.hidden = quickActions.length < 2;
-  if (!$all.hidden) {
-    const btn = $all.querySelector('button');
-    btn.textContent = `Pobierz wszystkie (${quickActions.length}) · ${qualityLabel(settings.defaultQuality)}`;
-    btn.disabled = false;
-    btn.onclick = async () => {
-      btn.disabled = true;
-      btn.textContent = 'Startuję pobieranie…';
-      for (const fn of [...quickActions]) {
-        await fn();
-        await new Promise((r) => setTimeout(r, 250));
-      }
-      btn.textContent = 'Wszystkie w kolejce ✓';
-    };
-  }
+  updateAll();
 }
+
+// „Pobierz wszystkie / zaznaczone” + filtr dni aktywności (Biblioteka reklam)
+function updateAll() {
+  const live = quickActions.filter((q) => q.card.isConnected);
+  const hasDays = live.some((q) => q.days);
+  const visible = live.filter((q) => {
+    const ok = !minDays || !hasDays || (q.days || 0) >= minDays;
+    q.card.hidden = !ok;
+    if (!ok) q.cb.checked = false;
+    return ok;
+  });
+  document.body.classList.toggle('multi', live.length > 1);
+  $all.hidden = live.length < 2;
+  if ($all.hidden) return;
+  const $days = $all.querySelector('select');
+  $days.hidden = !hasDays;
+  $days.value = String(minDays);
+  const picked = visible.filter((q) => q.cb.checked);
+  const todo = picked.length ? picked : visible;
+  const btn = $all.querySelector('button');
+  if (btn.dataset.busy) return;
+  btn.textContent = (picked.length ? `Pobierz zaznaczone (${picked.length})` : `Pobierz wszystkie (${visible.length})`) +
+    ` · ${qualityLabel(settings.defaultQuality)}`;
+  btn.disabled = !todo.length;
+  btn.onclick = async () => {
+    btn.disabled = true;
+    btn.dataset.busy = '1';
+    btn.textContent = 'Startuję pobieranie…';
+    for (const q of todo) {
+      await q.run();
+      q.cb.checked = false;
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    btn.textContent = `W kolejce ✓ (${todo.length})`;
+    setTimeout(() => { delete btn.dataset.busy; updateAll(); }, 2000);
+  };
+}
+
+$all.querySelector('select').onchange = (e) => {
+  minDays = +e.target.value;
+  chrome.storage.local.set({ minDays });
+  updateAll();
+};
 
 document.getElementById('clear').onclick = async () => {
   await chrome.runtime.sendMessage({ type: 'clear', tabId: tab.id });
@@ -423,6 +494,7 @@ document.getElementById('open').onclick = async () => {
 
 (async () => {
   settings = await getSettings();
+  ({ minDays = 0 } = await chrome.storage.local.get('minDays'));
   if (settings.outDir) document.getElementById('open').textContent = 'Otwórz folder docelowy';
   else if (WIN) document.getElementById('open').textContent = 'Otwórz folder Pobrane';
   await render();

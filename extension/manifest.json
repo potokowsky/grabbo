@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Grabbo",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Wykrywa wideo na stronie i pobiera je w wybranej jakości (z pomocnikiem yt-dlp).",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApIA54oGFiufvpvVykkSZE3HiAMPWd8iYyh+NBPsQCaI0lHNjbVdpv3TiAu9BI6C83/rsQr+TK2Z572hmq3mCMs+0/ip6/P7RK4Gx37F+5z7wDK2D8ZCnlnEx721VGm4oZbQddnb/a8K+N81PmcfqAn0kGJ7sPScPL2Mk4Nda62tMynWybeak3zML3nhru00T+Pybar1JYWP/RY5bDRCaqH/GDRwCYvTrcbc1QGOKqyK90Hq7peq87xFabraaTIhYePPYa8/xLkmMKjMmcKw/d+yuMKdBdH1cfqO7SaP7EmpWT6leuTmEWelbFITMr1nd3QTndWmAOEsnjUW9W5EYmQIDAQAB",
   "permissions": [

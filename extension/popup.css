@@ -7,7 +7,7 @@ body { margin: 0; width: 400px; max-height: 590px; background: var(--bg); color:
   font: 13px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
 header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 header strong { flex: 1; font-size: 14px; }
-.logo { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+.logo { width: 18px; height: 18px; background: url(icons/on-32.png) center / contain no-repeat; }
 main { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 380px; }
 footer { padding: 8px 10px 12px; border-top: 1px solid var(--line); text-align: center; }
 
@@ -88,3 +88,11 @@ body { display: flex; flex-direction: column; max-height: 590px; overflow: hidde
 header, footer, #all, .warn { flex-shrink: 0; }
 #jobs { flex: 0 0 auto; max-height: 210px; overflow-y: auto; padding-bottom: 8px; } /* nigdy się nie zgniata */
 main { flex: 1 1 auto; min-height: 140px; max-height: none; overflow-y: auto; }
+
+/* zaznaczanie + filtr dni + ponów */
+.pick { display: none; margin: 0; accent-color: var(--green); flex-shrink: 0; cursor: pointer; align-self: center; }
+body.multi .pick { display: inline-block; }
+#all { display: flex; gap: 6px; }
+#all .wide { flex: 1; min-width: 0; }
+#all select { background: #2a2a2a; color: var(--text); border: 1px solid #3a3a3a; border-radius: 7px; font: inherit; font-size: 12px; padding: 0 6px; }
+.job .retry { flex-shrink: 0; }
