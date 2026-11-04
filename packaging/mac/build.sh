@@ -79,10 +79,11 @@ PKG="$ROOT/dist/Grabbo-$VERSION-mac-$ARCH.pkg"
 COMP="$WORK/components.plist"
 pkgbuild --analyze --root "$PAYLOAD" "$COMP"
 n=0
-while plutil -extract "$n" raw "$COMP" >/dev/null 2>&1; do
+while plutil -extract "$n" xml1 -o - "$COMP" >/dev/null 2>&1; do
   plutil -replace "$n.BundleIsRelocatable" -bool NO "$COMP"
   n=$((n + 1))
 done
+echo "komponenty bez relokacji: $n"
 pkgbuild --root "$PAYLOAD" --component-plist "$COMP" --scripts packaging/mac/scripts \
   --identifier com.grabbo.app --version "$VERSION" \
   --install-location "/Library/Application Support/Grabbo/installer" \
